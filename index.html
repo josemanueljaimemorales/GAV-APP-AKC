@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>AKC PRO</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <img src="assets/logo.png" class="logo">
+    <h1>AKC PRO</h1>
+  </div>
+
+  <div class="menu">
+
+    <button class="btn" onclick="openLink('fuerza')">
+      Fuerza, prevención y orientación
+    </button>
+
+    <button class="btn" onclick="openLink('rutinas')">
+      Rutinas INP
+    </button>
+
+    <button class="btn" onclick="openLink('trabajo')">
+      Trabajo específico por elementos
+    </button>
+
+    <button class="btn calendar-btn" onclick="toggleCalendar()">
+      Calendario
+    </button>
+
+  </div>
+
+  <div id="calendar" class="calendar hidden">
+    <iframe 
+      src="https://calendar.google.com/calendar/embed?src=es.mexican%23holiday%40group.v.calendar.google.com&ctz=America%2FMexico_City">
+    </iframe>
+  </div>
+
+  <div id="viewer"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
