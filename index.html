@@ -1,47 +1,35 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>AKC PRO</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKC PRO</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app">
-
+<div id="home" class="screen active fade">
   <div class="header">
     <img src="assets/logo.png" class="logo">
     <h1>AKC PRO</h1>
   </div>
 
   <div class="menu">
-
-    <button class="btn" onclick="openLink('fuerza')">
-      Fuerza, prevención y orientación
-    </button>
-
-    <button class="btn" onclick="openLink('rutinas')">
-      Rutinas INP
-    </button>
-
-    <button class="btn" onclick="openLink('trabajo')">
-      Trabajo específico por elementos
-    </button>
-
-    <button class="btn calendar-btn" onclick="toggleCalendar()">
-      Calendario
-    </button>
-
+    <button class="btn big" onclick="openScreen('fuerza')">💪 Fuerza, prevención y orientación</button>
+    <button class="btn big" onclick="openScreen('rutinas')">📘 Rutinas INP</button>
+    <button class="btn big" onclick="openScreen('trabajo')">🎯 Trabajo específico por elementos</button>
+    <button class="btn big calendar-btn" onclick="openScreen('calendar')">📅 Calendario</button>
   </div>
+</div>
 
-  <div id="calendar" class="calendar hidden">
-    <iframe 
-      src="https://calendar.google.com/calendar/embed?src=es.mexican%23holiday%40group.v.calendar.google.com&ctz=America%2FMexico_City">
-    </iframe>
-  </div>
+<div id="viewerScreen" class="screen slide">
+  <button class="back" onclick="goHome()">← Volver</button>
+  <iframe id="viewerFrame"></iframe>
+</div>
 
-  <div id="viewer"></div>
-
+<div id="calendarScreen" class="screen slide">
+  <button class="back" onclick="goHome()">← Volver</button>
+  <iframe src="https://calendar.google.com/calendar/embed?src=es.mexican%23holiday%40group.v.calendar.google.com&ctz=America%2FMexico_City"></iframe>
 </div>
 
 <script src="script.js"></script>
