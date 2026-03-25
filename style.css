@@ -115,3 +115,18 @@ iframe {
   50% { transform: translateY(-8px); }
   100% { transform: translateY(0px); }
 }
+.header {
+  text-align: center;
+  animation: fadeLogo 0.8s ease;
+}
+
+@keyframes fadeLogo {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
