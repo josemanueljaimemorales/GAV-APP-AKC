@@ -98,7 +98,20 @@ iframe {
   font-size: 14px;
 }
 .logo {
-  width: 110px;
+  width: 120px;
   margin-bottom: 10px;
-  filter: drop-shadow(0 0 12px rgba(255,255,255,0.5));
+
+  /* brillo AKC */
+  filter: drop-shadow(0 0 10px rgba(59,130,246,0.8))
+          drop-shadow(0 0 20px rgba(37,99,235,0.6));
+
+  /* animación suave */
+  animation: floatLogo 3s ease-in-out infinite;
+}
+
+/* flotación tipo app */
+@keyframes floatLogo {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
 }
