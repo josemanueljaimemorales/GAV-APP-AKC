@@ -97,3 +97,8 @@ iframe {
   cursor: pointer;
   font-size: 14px;
 }
+.logo {
+  width: 110px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.5));
+}
