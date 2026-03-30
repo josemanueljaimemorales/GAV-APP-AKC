@@ -6,6 +6,7 @@ let url="";
 if(type==="fuerza")url="https://josemanueljaimemorales.github.io/AKC_PRO_MASTER/";
 if(type==="rutinas")url="https://josemanueljaimemorales.github.io/RutinasAKC/";
 if(type==="trabajo")url="https://josemanueljaimemorales.github.io/TRABAJOGAVAKC/";
+if(type==="basicos")url="https://josemanueljaimemorales.github.io/Basicos_AKC/";
 document.getElementById("viewerFrame").src=url;
 document.getElementById("viewerScreen").classList.add("active");
 }
