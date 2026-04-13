@@ -1,5 +1,8 @@
 function openScreen(type){
-if(type==="cargas")url="https://josemanueljaimemorales.github.io/Cargas-sistemas-y-fuerzas/";
+if(type==="cargas"){
+  window.open("https://josemanueljaimemorales.github.io/Cargas-sistemas-y-fuerzas/","_blank");
+  return;
+}
 if(type==="drive"){window.open("https://1drv.ms/f/c/55b6a939d4276db6/ErZtJ9Q5qbYggFX4OQAAAAABVtoRkonNs_tKnNzCeHOG7g","_blank");return;}
 document.getElementById("home").classList.remove("active");
 if(type==="calendar"){document.getElementById("calendarScreen").classList.add("active");return;}
