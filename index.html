@@ -12,10 +12,10 @@
 <div id="app">
 
   <!-- 🏠 HOME -->
-  <div id="home" class="screen active">
+  <div id="home" class="screen">
 
     <div class="header">
-      <img src="logo.png" class="logo">
+      <img src="logo.png" class="logo" alt="AKC logo">
       <h1>AKC PRO</h1>
     </div>
 
@@ -53,22 +53,23 @@
 
   </div>
 
-  <!-- 📺 VIEWER (para páginas dentro de la app) -->
+  <!-- 📺 VIEWER -->
   <div id="viewerScreen" class="screen">
 
     <button class="back" onclick="goHome()">← Volver</button>
 
-    <iframe id="viewerFrame"></iframe>
+    <iframe id="viewerFrame" loading="lazy"></iframe>
 
   </div>
 
-  <!-- 📅 CALENDARIO (pantalla interna) -->
+  <!-- 📅 CALENDARIO -->
   <div id="calendarScreen" class="screen">
 
     <button class="back" onclick="goHome()">← Volver</button>
 
     <iframe 
-      src="https://calendar.google.com/calendar/embed?src=a2329715397da169f4918dafb153aab9ad464eb1b23ff58214249d7e5811e354%40group.calendar.google.com&ctz=America%2FMexico_City">
+      src="https://calendar.google.com/calendar/embed?src=a2329715397da169f4918dafb153aab9ad464eb1b23ff58214249d7e5811e354%40group.calendar.google.com&ctz=America%2FMexico_City"
+      loading="lazy">
     </iframe>
 
   </div>
