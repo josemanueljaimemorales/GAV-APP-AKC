@@ -1,39 +1,108 @@
-body{margin:0;font-family:'Segoe UI',sans-serif;background:radial-gradient(circle at top,#1e3a8a,#020617);color:white;}
-.screen{display:none;height:100vh;padding:20px;}
-.active{display:block;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:radial-gradient(circle at top,#1e3a8a,#020617);
+  color:white;
+  overflow:hidden; /* 🔥 evita scroll global */
+}
+
+/* 🔥 PANTALLAS TIPO APP */
+.screen{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  padding:20px;
+  background:radial-gradient(circle at top,#1e3a8a,#020617);
+  overflow:hidden;
+}
+
+.screen.active{
+  display:block;
+}
+
+/* 🎬 ANIMACIONES */
 .fade{animation:fadeIn .5s ease;}
 .slide{animation:slideIn .4s ease;}
-@keyframes fadeIn{from{opacity:0;transform:scale(.95);}to{opacity:1;}}
-@keyframes slideIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:scale(.95);}
+  to{opacity:1;}
+}
+
+@keyframes slideIn{
+  from{transform:translateX(100%);}
+  to{transform:translateX(0);}
+}
+
+/* 🧩 HOME */
 .header{text-align:center;}
-.logo{width:170px;filter:drop-shadow(0 0 10px rgba(59,130,246,.8));}
-.menu{display:flex;flex-direction:column;gap:20px;margin-top:30px;}
-.btn{border:none;border-radius:22px;color:white;cursor:pointer;font-size:18px;padding:25px;background:linear-gradient(145deg,#3b82f6,#1d4ed8);box-shadow:0 12px 30px rgba(0,0,0,.6);transition:.25s;}
-.btn:hover{transform:translateY(-6px) scale(1.04);}
+
+.logo{
+  width:170px;
+  filter:drop-shadow(0 0 10px rgba(59,130,246,.8));
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  margin-top:30px;
+}
+
+/* 🔘 BOTONES */
+.btn{
+  border:none;
+  border-radius:22px;
+  color:white;
+  cursor:pointer;
+  font-size:18px;
+  padding:25px;
+  background:linear-gradient(145deg,#3b82f6,#1d4ed8);
+  box-shadow:0 12px 30px rgba(0,0,0,.6);
+  transition:.25s;
+}
+
+.btn:hover{
+  transform:translateY(-6px) scale(1.04);
+}
+
 .big{height:85px;}
-.calendar-btn{background:linear-gradient(145deg,#22c55e,#15803d);}
-.drive{background:linear-gradient(145deg,#f59e0b,#d97706);}
-iframe{width:100%;height:88vh;border:none;border-radius:16px;margin-top:10px;}
-.back{background:rgba(0,0,0,.6);color:white;border:none;padding:12px 18px;border-radius:14px;}
+
+.calendar-btn{
+  background:linear-gradient(145deg,#22c55e,#15803d);
+}
+
+.drive{
+  background:linear-gradient(145deg,#f59e0b,#d97706);
+}
+
 .cargas{
-  background: linear-gradient(145deg,#ef4444,#7f1d1d);
-}
-.screen {
-  display: none;
-  position: fixed;   /* 🔥 clave */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: white;
+  background:linear-gradient(145deg,#ef4444,#7f1d1d);
 }
 
-.screen.active {
-  display: block;
+/* 📺 VIEWER (iframe pantalla completa) */
+#viewerScreen{
+  background:white; /* opcional para apps externas */
 }
 
-#viewerFrame {
-  width: 100%;
-  height: 100%;
-  border: none;
+iframe{
+  width:100%;
+  height:calc(100% - 60px); /* deja espacio al botón regresar */
+  border:none;
+  border-radius:16px;
+  margin-top:10px;
+}
+
+/* 🔙 BOTÓN REGRESAR */
+.back{
+  background:rgba(0,0,0,.6);
+  color:white;
+  border:none;
+  padding:12px 18px;
+  border-radius:14px;
+  position:relative;
+  z-index:10;
 }
