@@ -6,39 +6,76 @@
   <title>AKC</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div id="app">
 
-  <div id="home" class="screen active fade">
+  <!-- 🏠 HOME -->
+  <div id="home" class="screen active">
+
     <div class="header">
       <img src="logo.png" class="logo">
       <h1>AKC PRO</h1>
     </div>
 
     <div class="menu">
-      <button class="btn big cargas" onclick="openScreen('cargas')">📊 Carga semanal y sistemas</button>
-      <button class="btn big" onclick="openScreen('fuerza')">💪 Fuerza</button>
-      <button class="btn big" onclick="openScreen('rutinas')">📘 Rutinas</button>
-      <button class="btn big" onclick="openScreen('trabajo')">🎯 Trabajo</button>
-      <button class="btn big" onclick="openScreen('basicos')">🔰 Básicos</button>
-      <button class="btn big calendar-btn" onclick="openScreen('calendar')">📅 Calendario</button>
-      <button class="btn big drive" onclick="openScreen('drive')">📂 Drive</button>
+
+      <button class="btn cargas" onclick="openScreen('cargas')">
+        📊 Carga semanal y sistemas
+      </button>
+
+      <button class="btn" onclick="openScreen('fuerza')">
+        💪 Fuerza, prevención y orientación
+      </button>
+
+      <button class="btn" onclick="openScreen('rutinas')">
+        📘 Rutinas NP
+      </button>
+
+      <button class="btn" onclick="openScreen('trabajo')">
+        🎯 Trabajo específico por elementos
+      </button>
+
+      <button class="btn" onclick="openScreen('basicos')">
+        🔰 Básicos
+      </button>
+
+      <button class="btn calendar-btn" onclick="openScreen('calendar')">
+        📅 Calendario
+      </button>
+
+      <button class="btn drive" onclick="openScreen('drive')">
+        📂 Archivos / OneDrive
+      </button>
+
     </div>
+
   </div>
 
+  <!-- 📺 VIEWER (para páginas dentro de la app) -->
   <div id="viewerScreen" class="screen">
+
     <button class="back" onclick="goHome()">← Volver</button>
+
     <iframe id="viewerFrame"></iframe>
+
   </div>
 
+  <!-- 📅 CALENDARIO (pantalla interna) -->
   <div id="calendarScreen" class="screen">
+
     <button class="back" onclick="goHome()">← Volver</button>
-    <iframe src="https://calendar.google.com/calendar/embed?ctz=America%2FMexico_City"></iframe>
+
+    <iframe 
+      src="https://calendar.google.com/calendar/embed?src=a2329715397da169f4918dafb153aab9ad464eb1b23ff58214249d7e5811e354%40group.calendar.google.com&ctz=America%2FMexico_City">
+    </iframe>
+
   </div>
 
 </div>
 
 <script src="script.js"></script>
+
 </body>
 </html>
