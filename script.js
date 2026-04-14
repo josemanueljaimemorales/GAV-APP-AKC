@@ -6,19 +6,19 @@ function openScreen(type){
     screen.classList.remove("active");
   });
 
-  // 👉 Pantalla interna (calendario)
+  // 📅 CALENDARIO (pantalla interna)
   if(type === "calendar"){
     document.getElementById("calendarScreen").classList.add("active");
     return;
   }
 
-  // 👉 Enlace externo (Drive)
+  // 📂 DRIVE / ONEDRIVE (SALIR DE LA APP)
   if(type === "drive"){
-    window.location.href = "https://1drv.ms/";
+    window.location.href = "https://1drv.ms/f/c/55b6a939d4276db6/ErZtJ9Q5qbYggFX4OQAAAAABVtoRkonNs_t";
     return;
   }
 
-  // 👉 URLs que se abren dentro de la app
+  // 🌐 PÁGINAS INTERNAS (iframe)
   const urls = {
     cargas: "https://josemanueljaimemorales.github.io/Cargas-sistemas-y-fuerzas/",
     fuerza: "https://josemanueljaimemorales.github.io/AKC-CON-REPORTE/",
@@ -27,7 +27,7 @@ function openScreen(type){
     basicos: "https://josemanueljaimemorales.github.io/Basicos_AKC/"
   };
 
-  // 👉 Mostrar pantalla viewer
+  // Mostrar viewer si existe URL
   if(urls[type]){
     document.getElementById("viewerFrame").src = urls[type];
     document.getElementById("viewerScreen").classList.add("active");
@@ -37,19 +37,17 @@ function openScreen(type){
 // 🔙 REGRESAR AL HOME
 function goHome(){
 
-  // Ocultar todo
   document.querySelectorAll(".screen").forEach(screen=>{
     screen.classList.remove("active");
   });
 
-  // Mostrar home
   document.getElementById("home").classList.add("active");
 
   // Limpiar iframe
   document.getElementById("viewerFrame").src = "";
 }
 
-// 🔥 ASEGURAR INICIO LIMPIO
+// 🔥 INICIO LIMPIO SIEMPRE EN HOME
 window.addEventListener("load", () => {
 
   document.querySelectorAll(".screen").forEach(screen=>{
