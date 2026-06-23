@@ -25,6 +25,7 @@ function openScreen(type){
   const urls = {
     cargas: "https://josemanueljaimemorales.github.io/Cargas-sistemas-y-fuerzas/",
     fuerza: "https://josemanueljaimemorales.github.io/AKC-CON-REPORTE/",
+    FuerzaFIG: "https://josemanueljaimemorales.github.io/FUERZAFIG/",
     rutinas: "https://josemanueljaimemorales.github.io/RutinasAKC/",
     trabajo: "https://josemanueljaimemorales.github.io/TRABAJOGAVAKC/",
     basicos: "https://josemanueljaimemorales.github.io/Basicos_AKC/"
