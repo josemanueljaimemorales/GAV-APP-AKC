@@ -30,7 +30,6 @@ function openScreen(type){
     rutinas: "https://josemanueljaimemorales.github.io/RutinasAKC/",
     trabajo: "https://josemanueljaimemorales.github.io/TRABAJOGAVAKC/",
     basicos: "https://josemanueljaimemorales.github.io/Basicos_AKC/"
-    NORMATIVOS: "https://josemanueljaimemorales.github.io/NormativosAKC/"
   };
 
   const frame = document.getElementById("viewerFrame");
