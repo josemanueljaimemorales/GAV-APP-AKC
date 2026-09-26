@@ -35,18 +35,17 @@ function openScreen(type){
   }
 
   const url = urls[type];
-  if(!url){
-    goHome();
-    return;
-  }
-
+  if(!url){goHome();return;}
   showViewer(url);
 }
 
 function showViewer(url){
   hideScreens();
   const frame = document.getElementById("viewerFrame");
-  frame.src = url;
+  if(frame){
+    frame.src = "about:blank";
+    requestAnimationFrame(() => { frame.src = url; });
+  }
   document.getElementById("viewerScreen").classList.add("active");
 }
 
@@ -62,44 +61,40 @@ function openPassword(){
   const modal = document.getElementById("passwordModal");
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("passwordError");
+  if(!modal) return;
   modal.classList.add("show");
-  modal.setAttribute("aria-hidden", "false");
+  modal.setAttribute("aria-hidden","false");
   error.textContent = "";
   input.value = "";
-  setTimeout(() => input.focus(), 50);
+  setTimeout(() => { try{input.focus();}catch(e){} },100);
 }
 
 function closePassword(){
   const modal = document.getElementById("passwordModal");
   if(!modal) return;
   modal.classList.remove("show");
-  modal.setAttribute("aria-hidden", "true");
+  modal.setAttribute("aria-hidden","true");
   pendingProtectedUrl = null;
 }
 
 function checkPassword(){
   const input = document.getElementById("passwordInput");
   const error = document.getElementById("passwordError");
-
   if(input.value === NORMATIVOS_PASSWORD){
     const url = pendingProtectedUrl;
     closePassword();
     if(url) showViewer(url);
     return;
   }
-
   error.textContent = "Contraseña incorrecta.";
   input.select();
 }
 
 document.addEventListener("keydown", event => {
   const modal = document.getElementById("passwordModal");
-  if(modal && modal.classList.contains("show") && event.key === "Enter"){
-    event.preventDefault();
-    checkPassword();
-  }
-  if(modal && modal.classList.contains("show") && event.key === "Escape"){
-    closePassword();
+  if(modal && modal.classList.contains("show")){
+    if(event.key === "Enter"){event.preventDefault();checkPassword();}
+    if(event.key === "Escape"){event.preventDefault();closePassword();}
   }
 });
 

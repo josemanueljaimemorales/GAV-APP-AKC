@@ -1,36 +1,22 @@
-AKC PRO — V3 RESPONSIVO
+AKC PRO — V4 RESPONSIVO
 
-Objetivo:
-Corregir únicamente el contenedor principal de AKC PRO para que se adapte al ancho y alto del dispositivo.
+Esta versión corrige tres puntos del portal AKC PRO:
+1) Las pantallas del portal ahora tienen desplazamiento vertical real hasta el final; se agrega espacio inferior para que los últimos botones/contenidos no queden cortados.
+2) El visor de repositorios sigue ocupando el tamaño completo y se mantiene responsive.
+3) La ventana de contraseña de Normativos se vuelve más robusta en tablets y pantallas táctiles: usa una capa absoluta dentro de AKC PRO, z-index alto, botones type=button y eventos directos.
 
-CAMBIOS:
-- Se elimina el límite max-width:420px que hacía que tabletas y laptops se vieran como celular.
-- AKC PRO ahora ocupa el ancho real disponible de la pantalla.
-- El visor iframe ocupa el 100% del espacio disponible.
-- Se agregan unidades responsive (clamp, vw, vh, dvh) para adaptar botones y textos.
-- En pantallas grandes el menú pasa a 2 y después 3 columnas.
-- Se conserva el botón Normativos AKC y su contraseña Akcgav.
-- La contraseña se sigue solicitando cada vez que se presiona Normativos.
-- No se modifica ningún repositorio interno.
-- No se modifica Firebase ni los datos de Normativos.
-- No se modifica la lógica de Excel de los repositorios.
+IMPORTANTE:
+- No modifica ningún repositorio interno.
+- No modifica Firebase.
+- No modifica la lógica de Normativos.
+- Conserva la contraseña Akcgav.
+- El zoom dentro de Normativos depende del propio repositorio Normativos; ese ajuste se hará después, directamente en ese repositorio.
 
-INSTALACIÓN:
-Reemplazar en el repositorio GAV-APP-AKC solamente:
+REEMPLAZAR SOLAMENTE:
 - index.html
 - script.js
 - style.css
 
 CONSERVAR:
 - logo.png
-- cualquier otro archivo que ya exista en el repositorio.
-
-Después de publicar en GitHub Pages, probar AKC PRO en:
-1. Celular vertical
-2. Celular horizontal
-3. Tablet vertical
-4. Tablet horizontal
-5. Laptop/PC
-
-NOTA:
-La capacidad de zoom dentro de cada repositorio depende también del viewport y CSS del propio repositorio. Esta V3 corrige primero el contenedor de AKC PRO. Los repositorios se ajustarán posteriormente uno por uno, como parte del siguiente paso.
+- demás archivos existentes.

@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AKC PRO</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-
 <div id="app">
 
   <div id="home" class="screen active">
@@ -17,34 +16,33 @@
     </div>
 
     <div class="menu">
-      <button class="btn cargas" onclick="openScreen('cargas')">📊 Carga semanal y sistemas</button>
-      <button class="btn SISTEMAS" onclick="openScreen('SISTEMAS')">👊🏻 SISTEMAS</button>
-      <button class="btn" onclick="openScreen('fuerza')">💪 Fuerza, prevención y orientación</button>
-      <button class="btn" onclick="openScreen('FuerzaFIG')">🫵🏻 Fuerza especifica para FIG</button>
-      <button class="btn" onclick="openScreen('rutinas')">📘 Rutinas NP</button>
-      <button class="btn" onclick="openScreen('trabajo')">🎯 Trabajo específico por elementos</button>
-      <button class="btn" onclick="openScreen('basicos')">🔰 Básicos</button>
-      <button class="btn" onclick="openScreen('normativos')">📋 Normativos AKC</button>
-      <button class="btn calendar-btn" onclick="openScreen('calendar')">📅 Calendario</button>
-      <button class="btn drive" onclick="openScreen('drive')">📂 Archivos / OneDrive</button>
+      <button type="button" class="btn cargas" onclick="openScreen('cargas')">📊 Carga semanal y sistemas</button>
+      <button type="button" class="btn SISTEMAS" onclick="openScreen('SISTEMAS')">👊🏻 SISTEMAS</button>
+      <button type="button" class="btn" onclick="openScreen('fuerza')">💪 Fuerza, prevención y orientación</button>
+      <button type="button" class="btn" onclick="openScreen('FuerzaFIG')">🫵🏻 Fuerza especifica para FIG</button>
+      <button type="button" class="btn" onclick="openScreen('rutinas')">📘 Rutinas NP</button>
+      <button type="button" class="btn" onclick="openScreen('trabajo')">🎯 Trabajo específico por elementos</button>
+      <button type="button" class="btn" onclick="openScreen('basicos')">🔰 Básicos</button>
+      <button type="button" class="btn" onclick="openScreen('normativos')">📋 Normativos AKC</button>
+      <button type="button" class="btn calendar-btn" onclick="openScreen('calendar')">📅 Calendario</button>
+      <button type="button" class="btn drive" onclick="openScreen('drive')">📂 Archivos / OneDrive</button>
     </div>
   </div>
 
   <div id="viewerScreen" class="screen viewer-screen">
-    <button class="back" onclick="goHome()">← Volver</button>
+    <button type="button" class="back" onclick="goHome()">← Volver</button>
     <div class="viewer-wrap">
       <iframe id="viewerFrame" title="AKC PRO repositorio" allow="fullscreen; clipboard-read; clipboard-write"></iframe>
     </div>
   </div>
 
   <div id="calendarScreen" class="screen viewer-screen">
-    <button class="back" onclick="goHome()">← Volver</button>
+    <button type="button" class="back" onclick="goHome()">← Volver</button>
     <div class="viewer-wrap">
       <iframe
         src="https://calendar.google.com/calendar/embed?src=a2329715397da169f4918dafb153aab9ad464eb1b23ff58214249d7e5811e354%40group.calendar.google.com&ctz=America%2FMexico_City"
         title="Calendario AKC"
-        allowfullscreen>
-      </iframe>
+        allowfullscreen></iframe>
     </div>
   </div>
 
@@ -55,14 +53,13 @@
       <input id="passwordInput" type="password" autocomplete="off" inputmode="text" placeholder="Contraseña">
       <div id="passwordError" class="password-error"></div>
       <div class="password-actions">
-        <button class="modal-btn cancel" onclick="closePassword()">Cancelar</button>
-        <button class="modal-btn enter" onclick="checkPassword()">Entrar</button>
+        <button type="button" class="modal-btn cancel" onclick="closePassword()">Cancelar</button>
+        <button type="button" class="modal-btn enter" onclick="checkPassword()">Entrar</button>
       </div>
     </div>
   </div>
 
 </div>
-
-<script src="script.js"></script>
+<script src="script.js?v=4"></script>
 </body>
 </html>
