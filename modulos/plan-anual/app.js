@@ -10,6 +10,7 @@ let days = [];
 let months = [];
 let specialEvents = { competencia:[], eventos:[], descansos:[] };
 let selectedDate = null;
+let assignmentData = { athletes: [], competitions: [] };
 
 const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const clean = v => String(v ?? '').trim();
@@ -17,11 +18,15 @@ const upper = v => clean(v).toUpperCase();
 const dateKey = d => `${d.year}-${String(d.month).padStart(2,'0')}-${String(d.day).padStart(2,'0')}`;
 
 function init(){
-  fetch('./MACRO_26_27.xlsx',{cache:'no-store'})
-    .then(r=>{if(!r.ok) throw Error('No se encontró MACRO_26_27.xlsx'); return r.arrayBuffer();})
-    .then(buf=>{
-      const wb = XLSX.read(buf,{type:'array',cellDates:true});
-      days = readCalendar(wb);
+  Promise.all([
+    fetch('./MACRO_26_27.xlsx',{cache:'no-store'}).then(r=>{if(!r.ok) throw Error('No se encontró MACRO_26_27.xlsx'); return r.arrayBuffer();}),
+    fetch('./ASIGNACION DE COMPETENCIAS.xlsx',{cache:'no-store'}).then(r=>{if(!r.ok) throw Error('No se encontró ASIGNACION DE COMPETENCIAS.xlsx'); return r.arrayBuffer();})
+  ])
+    .then(([macroBuf,assignmentBuf])=>{
+      const macroWb = XLSX.read(macroBuf,{type:'array',cellDates:true});
+      const assignmentWb = XLSX.read(assignmentBuf,{type:'array',cellDates:true});
+      days = readCalendar(macroWb);
+      assignmentData = readAssignments(assignmentWb);
       buildMonths();
       buildSpecialEvents();
       renderHome();
@@ -29,6 +34,92 @@ function init(){
     .catch(err=>{
       content.innerHTML = `<div class="error"><h2>No se pudo cargar el Plan Anual</h2><p>${esc(err.message)}</p></div>`;
     });
+}
+
+function normalizeName(v){
+  return String(v ?? '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+}
+
+function readAssignments(wb){
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  if(!ws) throw Error('No existe la hoja de asignación de competencias');
+  const matrix = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const header = matrix[0] || [];
+  const competitions = [];
+  for(let c=2;c<header.length;c++){
+    const title = clean(header[c]);
+    if(title && title.toUpperCase()!=='PARTICIPACION'){
+      competitions.push({key:`c${c}`, title, column:c});
+    }
+  }
+  const athletes = [];
+  for(let r=1;r<matrix.length;r++){
+    const name=clean(matrix[r]?.[0]);
+    if(!name) continue;
+    const level=clean(matrix[r]?.[1]);
+    const assignments={};
+    competitions.forEach(comp=>{
+      const value=upper(matrix[r]?.[comp.column]);
+      assignments[comp.key]=value==='SI';
+    });
+    athletes.push({name,level,assignments});
+  }
+  return {athletes,competitions};
+}
+
+function assignmentColumnsForEvent(event){
+  const title=normalizeName(event?.title || '');
+  const cols=[];
+  assignmentData.competitions.forEach(comp=>{
+    const key=normalizeName(comp.title);
+    let match=false;
+    if(title.includes('ACTION GYM')) match=key.includes('COPA ACTION GYM');
+    else if(title.includes('BENITO JUAREZ')) match=key.includes('COPA BENITO JUAREZ');
+    else if(title.includes('COMPETENCIA USA')) match=key.includes('MIKULAK INVITATIONAL');
+    else if(title.includes('FECHA PROBABLE DE SELECTIVOS')) match=key.includes('SELECTIVO NACIONAL 2027');
+    else if(title.includes('AGEPAC')) match=key.includes('AGEPAC 27');
+    else if(title.includes('JAIME ROMERO')) match=key.includes('COPA JAIME ROMERO');
+    else if(title.includes('ESTATAL GUEM')) match=key.includes('CAMPEONATO ESTATAL GUEM');
+    else if(title.includes('NACIONAL FMG')) match=key.includes('CAMPEONATO NACIONAL FMG');
+    else if(title.includes('OLIMPIADA')) match=key.includes('OLIMPIADA NACIONAL');
+    else if(title.includes('CONTROL')) match=key.includes('CTRL DE ENERO');
+    else match = key===title || key.includes(title) || title.includes(key);
+    if(match) cols.push(comp);
+  });
+  return cols;
+}
+
+function athletesForEvent(event){
+  const cols=assignmentColumnsForEvent(event);
+  if(!cols.length) return [];
+  return assignmentData.athletes.filter(a=>cols.some(c=>a.assignments[c.key]));
+}
+
+function eventForAssignment(comp){
+  const key=normalizeName(comp.title);
+  const matchers=[
+    ['COPA ACTION GYM', 'ACTION GYM'],
+    ['COPA BENITO JUAREZ', 'BENITO JUAREZ'],
+    ['MIKULAK INVITATIONAL', 'COMPETENCIA USA'],
+    ['SELECTIVO NACIONAL 2027', 'FECHA PROBABLE DE SELECTIVOS'],
+    ['AGEPAC 27', 'AGEPAC'],
+    ['COPA JAIME ROMERO 27', 'JAIME ROMERO'],
+    ['CAMPEONATO ESTATAL GUEM 27', 'ESTATAL GUEM'],
+    ['CAMPEONATO NACIONAL FMG 27', 'NACIONAL FMG'],
+    ['OLIMPIADA NACIONAL 27', 'OLIMPIADA']
+  ];
+  const pair=matchers.find(([a])=>key.includes(a));
+  if(!pair) return null;
+  const needle=pair[1];
+  return specialEvents.competencia.find(e=>normalizeName(e.title).includes(normalizeName(needle))) || null;
+}
+
+function competitionsForAthlete(athlete){
+  return assignmentData.competitions
+    .filter(c=>athlete.assignments[c.key])
+    .map(c=>({assignment:c,event:eventForAssignment(c)}));
 }
 
 function readCalendar(wb){
@@ -190,7 +281,8 @@ function renderHome(){
       <p>Consulta cada mes por día y accede directamente a competencias, eventos y descansos.</p>
     </section>
     <section class="quick-actions">
-      <button class="quick competition" data-list="competencia"><strong>COMPETENCIAS</strong><span>${specialEvents.competencia.length} registradas</span><b>›</b></button>
+      <button class="quick competition" data-list="competencia"><strong>COMPETENCIAS</strong><span>${specialEvents.competencia.length} registradas · asignaciones</span><b>›</b></button>
+      <button class="quick athletes" data-athletes><strong>ATLETAS</strong><span>${assignmentData.athletes.length} atletas asignados</span><b>›</b></button>
       <button class="quick event" data-list="eventos"><strong>EVENTOS</strong><span>${specialEvents.eventos.length} registrados</span><b>›</b></button>
       <button class="quick rest" data-list="descansos"><strong>DESCANSOS</strong><span>${specialEvents.descansos.length} registrados</span><b>›</b></button>
     </section>
@@ -200,6 +292,7 @@ function renderHome(){
     </section>`;
   document.querySelectorAll('[data-month-key]').forEach(b=>b.onclick=()=>showMonth(b.dataset.monthKey));
   document.querySelectorAll('[data-list]').forEach(b=>b.onclick=()=>showSpecialList(b.dataset.list));
+  document.querySelector('[data-athletes]')?.addEventListener('click',showAthletesList);
 }
 
 function showMonth(key){
@@ -245,7 +338,9 @@ function showSpecialList(type){
 
 function specialCard(e){
   const label=e.type==='competencia'?'COMPETENCIA':e.type==='eventos'?'EVENTO':'DESCANSO';
-  return `<button class="special-card ${esc(e.type)}" data-event-id="${esc(e.id)}"><span class="tag">${label}</span><strong>${esc(e.title)}</strong><small>${esc(formatRange(e))}</small><b>›</b></button>`;
+  const athletes=e.type==='competencia'?athletesForEvent(e):[];
+  const extra=e.type==='competencia'?` · ${athletes.length} atletas`:'';
+  return `<button class="special-card ${esc(e.type)}" data-event-id="${esc(e.id)}"><span class="tag">${label}</span><strong>${esc(e.title)}</strong><small>${esc(formatRange(e))}${extra}</small><b>›</b></button>`;
 }
 
 function findEvent(id,type){return (specialEvents[type]||[]).find(e=>e.id===id);}
@@ -258,19 +353,60 @@ function openSpecialByDate(key){
 function openSpecial(id,type){
   const e=findEvent(id,type); if(!e)return;
   backBtn.style.visibility='visible'; backBtn.onclick=()=>showSpecialList(type);
+  const athletes=e.type==='competencia'?athletesForEvent(e):[];
+  const athleteSection=e.type==='competencia' ? `
+    <section class="assigned-athletes">
+      <div class="subsection-head"><div><span>ATLETAS ASIGNADOS</span><small>${athletes.length} atletas</small></div></div>
+      ${athletes.length ? `<div class="athlete-grid">${athletes.map(a=>`<button class="athlete-chip" data-athlete="${esc(a.name)}"><strong>${esc(a.name)}</strong><span>Nivel ${esc(a.level)}</span>›</button>`).join('')}</div>` : '<div class="empty small">No hay atletas asignados a esta competencia.</div>'}
+    </section>` : '';
   content.innerHTML=`
     <section class="event-detail ${esc(type)}">
       <div class="eyebrow">${type==='competencia'?'COMPETENCIA':type==='eventos'?'EVENTO':'DESCANSO'}</div>
       <h2>${esc(e.title)}</h2>
       <div class="event-range">${esc(formatRange(e))}</div>
       <div class="event-description"><small>DESCRIPCIÓN</small><p>${esc(e.title)}</p></div>
+      ${athleteSection}
       <button class="calendar-jump" id="calendarJump">VER EN CALENDARIO GENERAL ›</button>
     </section>`;
+  document.querySelectorAll('[data-athlete]').forEach(b=>b.onclick=()=>showAthleteDetail(b.dataset.athlete, e.id));
   document.getElementById('calendarJump').onclick=()=>{
     selectedDate=e.start.key;
     const m=months.find(x=>x.days.some(d=>d.key===e.start.key));
     if(m) showMonth(m.key);
   };
+}
+
+function showAthletesList(){
+  backBtn.style.visibility='visible'; backBtn.onclick=renderHome;
+  content.innerHTML=`<section class="hero"><div class="eyebrow">PLAN ANUAL</div><h2>Atletas</h2><p>Selecciona un atleta para consultar las competencias que tiene asignadas.</p></section>
+  <section class="athlete-list">
+    ${assignmentData.athletes.map(a=>`<button class="athlete-row" data-athlete-row="${esc(a.name)}"><div><strong>${esc(a.name)}</strong><small>Nivel ${esc(a.level)}</small></div><span>${competitionsForAthlete(a).length} competencias ›</span></button>`).join('')}
+  </section>`;
+  document.querySelectorAll('[data-athlete-row]').forEach(b=>b.onclick=()=>showAthleteDetail(b.dataset.athleteRow));
+}
+
+function showAthleteDetail(name,returnEventId=null){
+  const athlete=assignmentData.athletes.find(a=>normalizeName(a.name)===normalizeName(name));
+  if(!athlete)return;
+  backBtn.style.visibility='visible';
+  backBtn.onclick=()=>returnEventId ? openSpecial(returnEventId,'competencia') : showAthletesList();
+  const items=competitionsForAthlete(athlete);
+  content.innerHTML=`<section class="athlete-detail">
+    <div class="eyebrow">ATLETA</div>
+    <h2>${esc(athlete.name)}</h2>
+    <div class="athlete-level">Nivel ${esc(athlete.level)}</div>
+    <div class="subsection-head"><div><span>COMPETENCIAS ASIGNADAS</span><small>${items.length} competencias</small></div></div>
+    <section class="athlete-competitions">
+      ${items.length ? items.map(({assignment,event})=>`
+        <button class="athlete-competition ${event?'linked':''}" data-athlete-event="${event?esc(event.id):''}" data-athlete-event-type="competencia">
+          <div><strong>${esc(assignment.title)}</strong><small>${event?esc(formatRange(event)):'Fecha pendiente en Plan Anual'}</small></div>
+          <span>${event?'Ver competencia ›':'Asignada'}</span>
+        </button>`).join('') : '<div class="empty">Este atleta no tiene competencias con SI en el archivo de asignación.</div>'}
+    </section>
+  </section>`;
+  document.querySelectorAll('[data-athlete-event]').forEach(b=>{
+    if(b.dataset.athleteEvent) b.onclick=()=>openSpecial(b.dataset.athleteEvent,'competencia');
+  });
 }
 
 function focusDate(key,scroll=true){
