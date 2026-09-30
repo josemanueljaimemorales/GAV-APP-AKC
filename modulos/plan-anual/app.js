@@ -106,10 +106,21 @@ function venuesForEvent(event){
 }
 
 function eventForAssignment(comp){
-  const key=normalizeName(comp.title);
-  const matchers=[
-    ['COPA ACTION GYM', 'ACTION GYM'],
-    ['COPA BENITO JUAREZ', 'BENITO JUAREZ'],
+  const key=normalizeName(comp?.title || '');
+  if(!key) return null;
+
+  // Primero intenta encontrar la competencia por coincidencia directa.
+  // Esto evita que una competencia que ya existe en el Plan Anual aparezca
+  // como "Fecha pendiente" solamente porque su nombre tiene un año/sufijo.
+  let direct = specialEvents.competencia.find(e=>{
+    const ek=normalizeName(e.title);
+    return ek===key || ek.includes(key) || key.includes(ek);
+  });
+  if(direct) return direct;
+
+  // Alias únicamente cuando el nombre del Excel y el nombre del
+  // calendario son realmente diferentes.
+  const aliases=[
     ['MIKULAK INVITATIONAL', 'COMPETENCIA USA'],
     ['SELECTIVO NACIONAL 2027', 'FECHA PROBABLE DE SELECTIVOS'],
     ['AGEPAC 27', 'AGEPAC'],
@@ -118,10 +129,15 @@ function eventForAssignment(comp){
     ['CAMPEONATO NACIONAL FMG 27', 'NACIONAL FMG'],
     ['OLIMPIADA NACIONAL 27', 'OLIMPIADA']
   ];
-  const pair=matchers.find(([a])=>key.includes(a));
-  if(!pair) return null;
-  const needle=pair[1];
-  return specialEvents.competencia.find(e=>normalizeName(e.title).includes(normalizeName(needle))) || null;
+  const alias=aliases.find(([a])=>key.includes(normalizeName(a)));
+  if(alias){
+    const needle=normalizeName(alias[1]);
+    return specialEvents.competencia.find(e=>normalizeName(e.title).includes(needle)) || null;
+  }
+
+  // "CTRL DE ENERO" no aparece en el MACRO actual; por eso se conserva
+  // como "Fecha pendiente" hasta que tenga una fecha en el Plan Anual.
+  return null;
 }
 
 function competitionsForAthlete(athlete){
