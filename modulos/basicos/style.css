@@ -376,3 +376,23 @@ h2{
     font-size:27px;
   }
 }
+
+
+/* ===== AKC IDENTIDAD METÁLICA — SOLO ESTÉTICA ===== */
+:root{
+  --akc-gun:#070d15;--akc-gun2:#101a27;--akc-steel:#b8c3cf;--akc-silver:#eef3f7;
+  --akc-blue:#2b9dff;--akc-cyan:#58d8ff;--akc-gold:#c9aa62;--akc-line:rgba(190,207,224,.22);
+}
+body{
+  background:radial-gradient(circle at 50% -8%,rgba(43,157,255,.18),transparent 32%),radial-gradient(circle at 90% 75%,rgba(201,170,98,.09),transparent 28%),linear-gradient(145deg,#03070d 0%,#0b1420 52%,#04080f 100%) !important;
+}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:url("../fuerza/logo-transparent.png") center 12%/min(980px,92vw) auto no-repeat;opacity:.045;filter:drop-shadow(0 0 22px rgba(43,157,255,.18));}
+button{border-color:var(--akc-line) !important;}
+.logo,[data-cliente-logo],.logo-main,.brand-mark img,.modal-logo img{filter:none !important;}
+.brand-mark,.modal-logo{background:linear-gradient(145deg,rgba(238,243,247,.10),rgba(55,70,88,.14)) !important;border:1px solid rgba(201,170,98,.22);box-shadow:inset 0 1px rgba(255,255,255,.16),0 0 28px rgba(43,157,255,.08);}
+
+/* Superficie visual global */
+.hero,.header,.menu-panel,.panel,.shell,.akc-shell,#menu,.app-shell{position:relative;z-index:1;}
+.hero,.header{background:linear-gradient(135deg,rgba(13,25,39,.94),rgba(5,10,17,.86),rgba(29,25,18,.50)) !important;border-color:rgba(184,195,207,.20) !important;box-shadow:0 20px 60px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.07),0 0 0 1px rgba(201,170,98,.05);}
+button,.btn,.button{background-image:linear-gradient(145deg,rgba(31,44,59,.92),rgba(8,14,22,.92)) !important;}
+button:hover,.btn:hover,.button:hover{border-color:rgba(201,170,98,.50) !important;box-shadow:0 12px 32px rgba(0,0,0,.35),0 0 22px rgba(43,157,255,.12) !important;}

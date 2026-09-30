@@ -47,17 +47,20 @@ function readAssignments(wb){
   if(!ws) throw Error('No existe la hoja de asignación de competencias');
   const matrix = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   const header = matrix[0] || [];
+  // Compatible con el formato actual y con una fila "Sede" debajo de los encabezados.
+  const venueRow = matrix.findIndex((row,i)=>i>0 && row.some(cell=>/^\s*SEDE(?:S| DE COMPETENCIAS)?\s*[:\n]?/i.test(clean(cell))));
   const competitions = [];
   for(let c=2;c<header.length;c++){
     const title = clean(header[c]);
     if(title && title.toUpperCase()!=='PARTICIPACION'){
-      competitions.push({key:`c${c}`, title, column:c});
+      competitions.push({key:`c${c}`, title, column:c, venue:venueRow>=0 ? clean(matrix[venueRow]?.[c]) : ''});
     }
   }
   const athletes = [];
   for(let r=1;r<matrix.length;r++){
+    if(r===venueRow) continue;
     const name=clean(matrix[r]?.[0]);
-    if(!name) continue;
+    if(!name || /^(SEDE|SEDES|SEDE DE COMPETENCIAS)$/i.test(name)) continue;
     const level=clean(matrix[r]?.[1]);
     const assignments={};
     competitions.forEach(comp=>{
@@ -95,6 +98,11 @@ function athletesForEvent(event){
   const cols=assignmentColumnsForEvent(event);
   if(!cols.length) return [];
   return assignmentData.athletes.filter(a=>cols.some(c=>a.assignments[c.key]));
+}
+
+function venuesForEvent(event){
+  const cols=assignmentColumnsForEvent(event);
+  return [...new Set(cols.map(c=>clean(c.venue)).filter(Boolean))];
 }
 
 function eventForAssignment(comp){
@@ -340,7 +348,9 @@ function specialCard(e){
   const label=e.type==='competencia'?'COMPETENCIA':e.type==='eventos'?'EVENTO':'DESCANSO';
   const athletes=e.type==='competencia'?athletesForEvent(e):[];
   const extra=e.type==='competencia'?` · ${athletes.length} atletas`:'';
-  return `<button class="special-card ${esc(e.type)}" data-event-id="${esc(e.id)}"><span class="tag">${label}</span><strong>${esc(e.title)}</strong><small>${esc(formatRange(e))}${extra}</small><b>›</b></button>`;
+  const venue=e.type==='competencia' ? venuesForEvent(e) : [];
+  const venueText=venue.length ? ` · ${venue.join(' / ')}` : '';
+  return `<button class="special-card ${esc(e.type)}" data-event-id="${esc(e.id)}"><span class="tag">${label}</span><strong>${esc(e.title)}</strong><small>${esc(formatRange(e))}${extra}${esc(venueText)}</small><b>›</b></button>`;
 }
 
 function findEvent(id,type){return (specialEvents[type]||[]).find(e=>e.id===id);}
@@ -364,6 +374,7 @@ function openSpecial(id,type){
       <div class="eyebrow">${type==='competencia'?'COMPETENCIA':type==='eventos'?'EVENTO':'DESCANSO'}</div>
       <h2>${esc(e.title)}</h2>
       <div class="event-range">${esc(formatRange(e))}</div>
+      ${e.type==='competencia' && venuesForEvent(e).length ? `<div class="competition-venue"><small>SEDE</small><strong>${esc(venuesForEvent(e).join(' · '))}</strong></div>` : ''}
       <div class="event-description"><small>DESCRIPCIÓN</small><p>${esc(e.title)}</p></div>
       ${athleteSection}
       <button class="calendar-jump" id="calendarJump">VER EN CALENDARIO GENERAL ›</button>

@@ -60,6 +60,26 @@ iframe{display:block;width:100%;height:100%;min-width:0;min-height:0;border:0;ba
 .password-box{position:relative;width:min(92vw,410px);max-height:90%;overflow:auto;padding:26px;border:1px solid rgba(160,205,245,.2);border-radius:24px;background:linear-gradient(145deg,rgba(10,28,47,.97),rgba(2,10,18,.97));box-shadow:0 24px 80px rgba(0,0,0,.65),0 0 30px rgba(0,130,255,.08);text-align:center}
 .modal-logo{width:86px;height:86px;margin:0 auto 8px;border-radius:22px;display:grid;place-items:center;background:radial-gradient(circle,rgba(30,120,200,.18),transparent 70%);overflow:hidden}.modal-logo img{width:115%;filter:invert(1) brightness(1.12)}
 .password-box h2{margin:0 0 8px;font-size:22px;letter-spacing:.12em}.password-box p{margin:0 0 18px;color:#9eb2c5;font-size:14px}.password-box input{width:100%;padding:13px 14px;border:1px solid #3b5268;border-radius:12px;background:#020912;color:white;font-size:16px;outline:none}.password-box input:focus{border-color:#35a5ff;box-shadow:0 0 0 3px rgba(40,150,255,.1)}.password-error{min-height:20px;margin-top:7px;color:#ffaaa7;font-size:13px}.password-actions{display:flex;gap:10px;margin-top:10px}.modal-btn{flex:1;padding:11px 14px;border:0;border-radius:11px;font-size:14px;cursor:pointer;touch-action:manipulation}.modal-btn.cancel{background:#26394c;color:white}.modal-btn.enter{background:linear-gradient(135deg,#158cff,#0863c5);color:white;box-shadow:0 8px 20px rgba(10,120,240,.18)}
-@media (min-width:700px){.menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.btn{min-height:88px;padding:16px 18px}.header{padding:18px 22px}}
-@media (min-width:1100px){.menu{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.header{max-width:1100px}.eagle-watermark{right:-8%;width:74vw}}
-@media (max-height:650px){.header{margin-top:8px;margin-bottom:10px}.brand-mark{width:68px;height:68px}.header{padding:10px 14px}.menu{gap:8px;padding-bottom:40px}.btn{min-height:62px;padding:10px 12px}.icon{width:38px;height:38px;font-size:19px}}
+@media (min-width:700px){.menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.btn{min-height:88px;padding:16px 18px}.header{padding:18px 22px}
+@media (min-width:1100px){.menu{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.header{max-width:1100px}.eagle-watermark{right:-8%;width:74vw}
+@media (max-height:650px){.header{margin-top:8px;margin-bottom:10px}.brand-mark{width:68px;height:68px}.header{padding:10px 14px}.menu{gap:8px;padding-bottom:40px}.btn{min-height:62px;padding:10px 12px}.icon{width:38px;height:38px;font-size:19px}
+
+
+/* ===== AKC IDENTIDAD METÁLICA — SOLO ESTÉTICA ===== */
+:root{
+  --akc-gun:#070d15;--akc-gun2:#101a27;--akc-steel:#b8c3cf;--akc-silver:#eef3f7;
+  --akc-blue:#2b9dff;--akc-cyan:#58d8ff;--akc-gold:#c9aa62;--akc-line:rgba(190,207,224,.22);
+}
+body{
+  background:radial-gradient(circle at 50% -8%,rgba(43,157,255,.18),transparent 32%),radial-gradient(circle at 90% 75%,rgba(201,170,98,.09),transparent 28%),linear-gradient(145deg,#03070d 0%,#0b1420 52%,#04080f 100%) !important;
+}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:url("modulos/fuerza/logo-transparent.png") center 12%/min(980px,92vw) auto no-repeat;opacity:.045;filter:drop-shadow(0 0 22px rgba(43,157,255,.18));}
+button{border-color:var(--akc-line) !important;}
+.logo,[data-cliente-logo],.logo-main,.brand-mark img,.modal-logo img{filter:none !important;}
+.brand-mark,.modal-logo{background:linear-gradient(145deg,rgba(238,243,247,.10),rgba(55,70,88,.14)) !important;border:1px solid rgba(201,170,98,.22);box-shadow:inset 0 1px rgba(255,255,255,.16),0 0 28px rgba(43,157,255,.08);}
+
+/* Superficie visual global */
+.hero,.header,.menu-panel,.panel,.shell,.akc-shell,#menu,.app-shell{position:relative;z-index:1;}
+.hero,.header{background:linear-gradient(135deg,rgba(13,25,39,.94),rgba(5,10,17,.86),rgba(29,25,18,.50)) !important;border-color:rgba(184,195,207,.20) !important;box-shadow:0 20px 60px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.07),0 0 0 1px rgba(201,170,98,.05);}
+button,.btn,.button{background-image:linear-gradient(145deg,rgba(31,44,59,.92),rgba(8,14,22,.92)) !important;}
+button:hover,.btn:hover,.button:hover{border-color:rgba(201,170,98,.50) !important;box-shadow:0 12px 32px rgba(0,0,0,.35),0 0 22px rgba(43,157,255,.12) !important;}

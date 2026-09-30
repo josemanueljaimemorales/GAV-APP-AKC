@@ -1,11 +1,11 @@
 window.CLIENTE = {
   nombre: "ÁGUILAS KC",
   subtitulo: "GIMNASIA ARTÍSTICA VARONIL",
-  logo: "logo.png",
+  logo: "../modulos/fuerza/logo-transparent.png",
   colores: {
-    principal: "#1597ff",
-    secundario: "#7b61ff",
-    acento: "#00d9ff"
+    principal: "#aeb9c6",
+    secundario: "#c5a45a",
+    acento: "#2ea8ff"
   },
   repositorios: {
     normativosExcel: "https://raw.githubusercontent.com/josemanueljaimemorales/NormativosAKC/main/NORMATIVOS_AKC.xlsx",
