@@ -42,18 +42,54 @@ function normalizeName(v){
     .toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
 }
 
+function competitionTokens(v){
+  let t=normalizeName(v)
+    .replace(/\b(?:19|20)\d{2}\b/g,' ')
+    .replace(/\b\d{1,2}\b/g,' ')
+    .replace(/\b(?:DE|DEL|LA|EL|Y|O|PARA|POR|EN)\b/g,' ')
+    .replace(/\b(?:COPA|CAMPEONATO|COMPETENCIA|TORNEO|CONTROL|EVENTO)\b/g,' ')
+    .replace(/\b(?:PROBABLE|FECHA|PRIMER|PRIMERO|SEGUNDO|SEGUNDA|1ER|2DO|2DA)\b/g,' ')
+    .replace(/\bSELECTIVOS?\b/g,'SELECTIVO')
+    .replace(/\bNACIONALES?\b/g,'NACIONAL')
+    .replace(/\bESTATALES?\b/g,'ESTATAL')
+    .replace(/\bINVITATIONALS?\b/g,'INVITATIONAL')
+    .replace(/\bCUPS?\b/g,'CUP')
+    .replace(/\s+/g,' ').trim();
+  return new Set(t ? t.split(' ') : []);
+}
+
+function competitionMatchScore(a,b){
+  const na=normalizeName(a), nb=normalizeName(b);
+  if(!na || !nb) return 0;
+  if(na===nb) return 100;
+  if(na.includes(nb) || nb.includes(na)) return 92;
+
+  const A=competitionTokens(a), B=competitionTokens(b);
+  if(!A.size || !B.size) return 0;
+  let common=0;
+  A.forEach(x=>{ if(B.has(x)) common++; });
+  const union=new Set([...A,...B]).size;
+  const minSize=Math.min(A.size,B.size);
+  const coverage=common/minSize;
+  const jaccard=common/union;
+
+  // Requerimos una coincidencia fuerte para no mezclar competencias distintas.
+  if(coverage===1) return 80 + jaccard*10;
+  if(coverage>=0.75 && jaccard>=0.50) return 65 + jaccard*10;
+  return jaccard*50;
+}
+
 function readAssignments(wb){
   const ws = wb.Sheets[wb.SheetNames[0]];
   if(!ws) throw Error('No existe la hoja de asignación de competencias');
   const matrix = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   const header = matrix[0] || [];
-  // Compatible con el formato actual y con una fila "Sede" debajo de los encabezados.
   const venueRow = matrix.findIndex((row,i)=>i>0 && row.some(cell=>/^\s*SEDE(?:S| DE COMPETENCIAS)?\s*[:\n]?/i.test(clean(cell))));
   const competitions = [];
   for(let c=2;c<header.length;c++){
     const title = clean(header[c]);
     if(title && title.toUpperCase()!=='PARTICIPACION'){
-      competitions.push({key:`c${c}`, title, column:c, venue:venueRow>=0 ? clean(matrix[venueRow]?.[c]) : ''});
+      competitions.push({key:`c${c}`, title, column:c, venue:venueRow>=0 ? clean(matrix[venueRow]?.[c]).replace(/^SEDE\s*[:\n]?\s*/i,'').trim() : ''});
     }
   }
   const athletes = [];
@@ -73,25 +109,25 @@ function readAssignments(wb){
 }
 
 function assignmentColumnsForEvent(event){
-  const title=normalizeName(event?.title || '');
-  const cols=[];
-  assignmentData.competitions.forEach(comp=>{
-    const key=normalizeName(comp.title);
-    let match=false;
-    if(title.includes('ACTION GYM')) match=key.includes('COPA ACTION GYM');
-    else if(title.includes('BENITO JUAREZ')) match=key.includes('COPA BENITO JUAREZ');
-    else if(title.includes('COMPETENCIA USA')) match=key.includes('MIKULAK INVITATIONAL');
-    else if(title.includes('FECHA PROBABLE DE SELECTIVOS')) match=key.includes('SELECTIVO NACIONAL 2027');
-    else if(title.includes('AGEPAC')) match=key.includes('AGEPAC 27');
-    else if(title.includes('JAIME ROMERO')) match=key.includes('COPA JAIME ROMERO');
-    else if(title.includes('ESTATAL GUEM')) match=key.includes('CAMPEONATO ESTATAL GUEM');
-    else if(title.includes('NACIONAL FMG')) match=key.includes('CAMPEONATO NACIONAL FMG');
-    else if(title.includes('OLIMPIADA')) match=key.includes('OLIMPIADA NACIONAL');
-    else if(title.includes('CONTROL')) match=key.includes('CONTROL SIN JUEZ') || key.includes('CTRL DE ENERO');
-    else match = key===title || key.includes(title) || title.includes(key);
-    if(match) cols.push(comp);
-  });
-  return cols;
+  const title=clean(event?.title || '');
+  if(!title) return [];
+
+  const scored=assignmentData.competitions
+    .map(comp=>({comp,score:competitionMatchScore(title,comp.title)}))
+    .filter(x=>x.score>=65)
+    .sort((a,b)=>b.score-a.score);
+
+  if(!scored.length) return [];
+
+  // Si hay una coincidencia exacta/directa, usa solo esa columna.
+  const best=scored[0];
+  const exact=normalizeName(title)===normalizeName(best.comp.title);
+  if(exact || best.score>=92) return [best.comp];
+
+  // Para nombres ligeramente distintos (p.ej. PROBABLE 1ER SELECTIVO
+  // vs FECHA PROBABLE DE SELECTIVOS), acepta coincidencias de alta cobertura.
+  const threshold=Math.max(65,best.score-8);
+  return scored.filter(x=>x.score>=threshold).map(x=>x.comp);
 }
 
 function athletesForEvent(event){
@@ -109,35 +145,12 @@ function eventForAssignment(comp){
   const key=normalizeName(comp?.title || '');
   if(!key) return null;
 
-  // Primero intenta encontrar la competencia por coincidencia directa.
-  // Esto evita que una competencia que ya existe en el Plan Anual aparezca
-  // como "Fecha pendiente" solamente porque su nombre tiene un año/sufijo.
-  let direct = specialEvents.competencia.find(e=>{
-    const ek=normalizeName(e.title);
-    return ek===key || ek.includes(key) || key.includes(ek);
-  });
-  if(direct) return direct;
+  const scored=specialEvents.competencia
+    .map(e=>({event:e,score:competitionMatchScore(comp.title,e.title)}))
+    .filter(x=>x.score>=65)
+    .sort((a,b)=>b.score-a.score);
 
-  // Alias únicamente cuando el nombre del Excel y el nombre del
-  // calendario son realmente diferentes.
-  const aliases=[
-    ['MIKULAK INVITATIONAL', 'COMPETENCIA USA'],
-    ['SELECTIVO NACIONAL 2027', 'FECHA PROBABLE DE SELECTIVOS'],
-    ['AGEPAC 27', 'AGEPAC'],
-    ['COPA JAIME ROMERO 27', 'JAIME ROMERO'],
-    ['CAMPEONATO ESTATAL GUEM 27', 'ESTATAL GUEM'],
-    ['CAMPEONATO NACIONAL FMG 27', 'NACIONAL FMG'],
-    ['OLIMPIADA NACIONAL 27', 'OLIMPIADA']
-  ];
-  const alias=aliases.find(([a])=>key.includes(normalizeName(a)));
-  if(alias){
-    const needle=normalizeName(alias[1]);
-    return specialEvents.competencia.find(e=>normalizeName(e.title).includes(needle)) || null;
-  }
-
-  // "CTRL DE ENERO" no aparece en el MACRO actual; por eso se conserva
-  // como "Fecha pendiente" hasta que tenga una fecha en el Plan Anual.
-  return null;
+  return scored.length ? scored[0].event : null;
 }
 
 function competitionsForAthlete(athlete){
@@ -201,11 +214,11 @@ function classify(d){
   // indicado en la descripción del Excel.
   if(/DESCANS|VACACION|PUENTE/.test(t)) return 'descansos';
 
-  // Los controles deportivos se manejan como COMPETENCIAS, no como eventos.
-  // Esto incluye controles sin juez y controles internos, que además pueden
-  // tener atletas asignados en ASIGNACION DE COMPETENCIAS.xlsx.
-  if(d.unit==='C' || /COPA|COMPETENCIA|CAMPEONATO|OLIMPIADA|ESTATAL|TORNEO|CONTROL(?:\s+SIN\s+JUEZ|\s+INTERNO)?/.test(t)) return 'competencia';
-  if(/EVENTO|PRUEBA|CEREMONIA/.test(t)) return 'eventos';
+  // La columna "Unidad de entrenamiento" es la fuente oficial de clasificación:
+  // C = Competencia, E = Evento. No se intenta adivinar por el nombre de la descripción.
+  const unit = upper(d.unit).replace(/\s+/g,'');
+  if(unit==='C') return 'competencia';
+  if(unit==='E') return 'eventos';
   return null;
 }
 
