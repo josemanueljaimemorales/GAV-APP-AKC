@@ -121,7 +121,6 @@ function eventForAssignment(comp){
   // Alias únicamente cuando el nombre del Excel y el nombre del
   // calendario son realmente diferentes.
   const aliases=[
-    ['CONTROL SIN JUEZ', 'CONTROL'],
     ['MIKULAK INVITATIONAL', 'COMPETENCIA USA'],
     ['SELECTIVO NACIONAL 2027', 'FECHA PROBABLE DE SELECTIVOS'],
     ['AGEPAC 27', 'AGEPAC'],
@@ -136,8 +135,8 @@ function eventForAssignment(comp){
     return specialEvents.competencia.find(e=>normalizeName(e.title).includes(needle)) || null;
   }
 
-  // Los controles pueden tener nombres distintos entre asignaciones y calendario;
-  // se resuelven mediante alias para conservar la relación con los atletas.
+  // "CTRL DE ENERO" no aparece en el MACRO actual; por eso se conserva
+  // como "Fecha pendiente" hasta que tenga una fecha en el Plan Anual.
   return null;
 }
 
