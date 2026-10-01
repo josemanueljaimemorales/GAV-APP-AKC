@@ -112,6 +112,16 @@ function assignmentColumnsForEvent(event){
   const title=clean(event?.title || '');
   if(!title) return [];
 
+  // 1) Coincidencia EXACTA entre la descripción del MACRO y el encabezado
+  // de ASIGNACION. Esta es la vía principal y evita cualquier alias manual.
+  const normalizedTitle=normalizeName(title);
+  const exact=assignmentData.competitions.find(comp =>
+    normalizeName(comp.title) === normalizedTitle
+  );
+  if(exact) return [exact];
+
+  // 2) Si el nombre cambió ligeramente (año, prefijos, etc.), usamos
+  // coincidencia por contenido, pero nunca inventamos una competencia.
   const scored=assignmentData.competitions
     .map(comp=>({comp,score:competitionMatchScore(title,comp.title)}))
     .filter(x=>x.score>=65)
@@ -119,13 +129,9 @@ function assignmentColumnsForEvent(event){
 
   if(!scored.length) return [];
 
-  // Si hay una coincidencia exacta/directa, usa solo esa columna.
   const best=scored[0];
-  const exact=normalizeName(title)===normalizeName(best.comp.title);
-  if(exact || best.score>=92) return [best.comp];
+  if(best.score>=92) return [best.comp];
 
-  // Para nombres ligeramente distintos (p.ej. PROBABLE 1ER SELECTIVO
-  // vs FECHA PROBABLE DE SELECTIVOS), acepta coincidencias de alta cobertura.
   const threshold=Math.max(65,best.score-8);
   return scored.filter(x=>x.score>=threshold).map(x=>x.comp);
 }
