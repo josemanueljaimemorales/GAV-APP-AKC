@@ -201,8 +201,11 @@ function classify(d){
   // indicado en la descripción del Excel.
   if(/DESCANS|VACACION|PUENTE/.test(t)) return 'descansos';
 
-  if(d.unit==='C' || /COPA|COMPETENCIA|CAMPEONATO|OLIMPIADA|ESTATAL|TORNEO/.test(t)) return 'competencia';
-  if(/CONTROL|EVENTO|PRUEBA|CEREMONIA/.test(t)) return 'eventos';
+  // Los controles deportivos se manejan como COMPETENCIAS, no como eventos.
+  // Esto incluye controles sin juez y controles internos, que además pueden
+  // tener atletas asignados en ASIGNACION DE COMPETENCIAS.xlsx.
+  if(d.unit==='C' || /COPA|COMPETENCIA|CAMPEONATO|OLIMPIADA|ESTATAL|TORNEO|CONTROL(?:\s+SIN\s+JUEZ|\s+INTERNO)?/.test(t)) return 'competencia';
+  if(/EVENTO|PRUEBA|CEREMONIA/.test(t)) return 'eventos';
   return null;
 }
 
