@@ -87,7 +87,7 @@ function assignmentColumnsForEvent(event){
     else if(title.includes('ESTATAL GUEM')) match=key.includes('CAMPEONATO ESTATAL GUEM');
     else if(title.includes('NACIONAL FMG')) match=key.includes('CAMPEONATO NACIONAL FMG');
     else if(title.includes('OLIMPIADA')) match=key.includes('OLIMPIADA NACIONAL');
-    else if(title.includes('CONTROL')) match=key.includes('CTRL DE ENERO');
+    else if(title.includes('CONTROL')) match=key.includes('CONTROL SIN JUEZ') || key.includes('CTRL DE ENERO');
     else match = key===title || key.includes(title) || title.includes(key);
     if(match) cols.push(comp);
   });
@@ -121,6 +121,7 @@ function eventForAssignment(comp){
   // Alias únicamente cuando el nombre del Excel y el nombre del
   // calendario son realmente diferentes.
   const aliases=[
+    ['CONTROL SIN JUEZ', 'CONTROL'],
     ['MIKULAK INVITATIONAL', 'COMPETENCIA USA'],
     ['SELECTIVO NACIONAL 2027', 'FECHA PROBABLE DE SELECTIVOS'],
     ['AGEPAC 27', 'AGEPAC'],
@@ -135,8 +136,8 @@ function eventForAssignment(comp){
     return specialEvents.competencia.find(e=>normalizeName(e.title).includes(needle)) || null;
   }
 
-  // "CTRL DE ENERO" no aparece en el MACRO actual; por eso se conserva
-  // como "Fecha pendiente" hasta que tenga una fecha en el Plan Anual.
+  // Los controles pueden tener nombres distintos entre asignaciones y calendario;
+  // se resuelven mediante alias para conservar la relación con los atletas.
   return null;
 }
 
