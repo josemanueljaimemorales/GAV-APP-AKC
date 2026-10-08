@@ -144,7 +144,7 @@ function buildPrintableCalendar(){
   }).join('');
 
   const athleteRows=assignmentData.athletes.map(a=>{
-    const assigned=assignmentData.competitions.filter(c=>a.assignments[c.key]);
+    const assigned=orderedAssignmentCompetitions().filter(c=>a.assignments[c.key]);
     const list=assigned.length
       ? assigned.map(c=>`<div class="a-event"><span>✓</span>${esc(c.title)}</div>`).join('')
       : '<div class="a-none">Sin competencias asignadas</div>';
@@ -337,8 +337,21 @@ function eventForAssignment(comp){
   return scored.length ? scored[0].event : null;
 }
 
+function competitionOrderKey(comp){
+  const event=eventForAssignment(comp);
+  return event?.start?.key || '9999-99-99';
+}
+
+function orderedAssignmentCompetitions(){
+  return assignmentData.competitions.slice().sort((a,b)=>{
+    const ka=competitionOrderKey(a), kb=competitionOrderKey(b);
+    if(ka!==kb) return ka.localeCompare(kb);
+    return normalizeName(a.title).localeCompare(normalizeName(b.title),'es');
+  });
+}
+
 function competitionsForAthlete(athlete){
-  return assignmentData.competitions
+  return orderedAssignmentCompetitions()
     .filter(c=>athlete.assignments[c.key])
     .map(c=>({assignment:c,event:eventForAssignment(c)}));
 }
