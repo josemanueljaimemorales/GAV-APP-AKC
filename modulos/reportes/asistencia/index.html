@@ -179,7 +179,72 @@ async function findLatestFile(){
  if(!candidates.length){const d=parseFilenameDate(fallback);return {name:fallback,date:d,url:fallback}}
  candidates.sort((a,b)=>b.date-a.date);return candidates[0];
 }
-async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=()=>window.print();}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
+async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=printReportToPdf;
+
+function printReportToPdf(){
+  const source = $('printReport');
+  if(!source || !source.innerHTML.trim()){
+    alert('El reporte todavía no está listo para imprimir.');
+    return;
+  }
+  const w = window.open('', '_blank');
+  if(!w){
+    alert('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.');
+    return;
+  }
+  const baseUrl = new URL('.', window.location.href).href;
+  const html = `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<base href="${baseUrl}">
+<title>Reporte de asistencia AKC</title>
+<style>
+@page{size:A4 portrait;margin:8mm}
+:root{color-scheme:light;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+*{box-sizing:border-box;forced-color-adjust:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+html,body{margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;color-scheme:light!important}
+body{font-size:9px}
+.report{display:block!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important}
+.hero{display:block!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#17243b!important;overflow:visible!important}
+.heroHead{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;border-bottom:2px solid #c5a45a!important;padding:0 0 8px!important;background:#fff!important;color:#17243b!important}
+.heroTitle{font-size:20px!important;font-weight:800!important;color:#17243b!important}
+.heroSub{font-size:9px!important;color:#596579!important}
+.heroLogo{width:100px!important;height:54px!important;object-fit:contain!important}
+.metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;margin:10px 0!important}
+.metric{min-width:0!important;padding:7px!important;border:1px solid #d6dce5!important;border-radius:8px!important;background:#fff!important;color:#17243b!important}
+.metric small{display:block!important;color:#596579!important;font-size:8px!important;font-weight:700!important}
+.metric strong{display:block!important;color:#17243b!important;font-size:16px!important}
+.groupBox,.tableBox,.noteBox{display:block!important;margin-top:9px!important;border:1px solid #d6dce5!important;border-radius:8px!important;background:#fff!important;color:#17243b!important;overflow:visible!important}
+.boxTitle{padding:6px 8px!important;background:#f4f7fa!important;color:#17243b!important;font-weight:800!important}
+.groupTable,.individual{width:100%!important;min-width:0!important;border-collapse:collapse!important;table-layout:fixed!important;background:#fff!important;color:#17243b!important}
+.groupTable th,.individual th{padding:5px 3px!important;background:#17243b!important;color:#fff!important;font-size:7px!important;border:1px solid #d6dce5!important}
+.groupTable td,.individual td{padding:4px 3px!important;border:1px solid #d6dce5!important;font-size:7px!important;color:#17243b!important;background:#fff}
+.individual tr.row-green,.individual tr.row-green td{background:#dceedd!important;color:#17243b!important}
+.individual tr.row-yellow,.individual tr.row-yellow td{background:#fff1c7!important;color:#17243b!important}
+.individual tr.row-red,.individual tr.row-red td{background:#f6dada!important;color:#17243b!important}
+.groupTable td.row-green{background:#dceedd!important;color:#17243b!important}
+.groupTable td.row-yellow{background:#fff1c7!important;color:#17243b!important}
+.groupTable td.row-red{background:#f6dada!important;color:#17243b!important}
+.days,.doubleText{padding:7px 8px!important;background:#fff!important;color:#17243b!important;font-size:8px!important;line-height:1.4!important}
+.noteBox{padding:8px!important;background:#f4ebd3!important;color:#17243b!important;border-color:#d8bf77!important;font-size:8px!important;line-height:1.4!important}
+.pct{font-weight:800!important}
+tr{break-inside:avoid!important;page-break-inside:avoid!important}
+.tableBox{break-before:page!important;page-break-before:always!important}
+img{max-width:100%!important}
+</style>
+</head>
+<body><main class="report printReport">${source.innerHTML}</main>
+<script>
+window.onload=()=>{setTimeout(()=>{window.focus();window.print();},500)};
+window.onafterprint=()=>setTimeout(()=>window.close(),300);
+</script>
+</body></html>`;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
 init();
 </script>
 </body></html>
