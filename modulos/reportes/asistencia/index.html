@@ -184,6 +184,7 @@ async function init(){try{const latest=await findLatestFile();currentFile=latest
 
 
 
+
 async function printReportToPdf(){
   const source=$('printReport');
   if(!source||!source.innerHTML.trim()){
@@ -204,23 +205,68 @@ async function printReportToPdf(){
   const clone=source.cloneNode(true);
   clone.style.cssText='display:block!important;visibility:visible!important;width:194mm!important;max-width:194mm!important;margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;overflow:visible!important;box-sizing:border-box!important;';
 
-  // El PDF usa estilos propios: no hereda el fondo oscuro de la aplicación.
+  // Cambios exclusivos del PDF: quitar sesiones programadas del resumen grupal.
+  const groupTable=clone.querySelector('.groupTable');
+  if(groupTable){
+    groupTable.querySelectorAll('tr').forEach(tr=>{
+      if(tr.children.length>=4) tr.removeChild(tr.children[2]);
+    });
+  }
+
+  // Corregir el ancho de la tabla individual y enfatizar porcentajes.
+  const individual=clone.querySelector('.individual');
+  if(individual){
+    individual.style.cssText='width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;';
+    const widths=['4%','22%','13%','8%','8%','6%','6%','9%','12%','12%'];
+    individual.querySelectorAll('tr').forEach(tr=>{
+      [...tr.children].forEach((cell,i)=>{
+        cell.style.setProperty('width',widths[i]||'8%','important');
+        cell.style.setProperty('padding','2px 1.5px','important');
+        cell.style.setProperty('font-size','6.8pt','important');
+        cell.style.setProperty('overflow-wrap','anywhere','important');
+        cell.style.setProperty('word-break','normal','important');
+      });
+      if(tr.children.length>=10){
+        const pctCell=tr.children[9];
+        pctCell.style.setProperty('font-weight','900','important');
+      }
+    });
+    individual.querySelectorAll('tbody tr td:last-child').forEach(td=>{
+      td.style.setProperty('font-weight','900','important');
+    });
+  }
+  // Porcentajes grupales en negritas y anchos ajustados después de quitar la tercera columna.
+  if(groupTable){
+    groupTable.style.cssText='width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;';
+    groupTable.querySelectorAll('tr').forEach(tr=>{
+      [...tr.children].forEach((cell,i)=>{
+        cell.style.setProperty('width',['40%','20%','40%'][i]||'','important');
+        cell.style.setProperty('padding','4px 5px','important');
+      });
+      if(tr.children.length===3){
+        tr.lastElementChild.style.setProperty('font-weight','900','important');
+      }
+    });
+  }
+
   const style=document.createElement('style');
   style.textContent=`
     #printReport, #printReport * { box-sizing:border-box !important; }
     #printReport { background:#fff !important; color:#17243b !important; width:194mm !important; }
-    #printReport .reportPage, #printReport .page, #printReport .sheet { background:#fff !important; color:#17243b !important; }
-    #printReport table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; }
-    #printReport th, #printReport td { overflow-wrap:anywhere !important; word-break:normal !important; }
-    #printReport .tableBox { width:100% !important; overflow:visible !important; }
-    #printReport .summary, #printReport .card, #printReport .groupBox, #printReport .noteBox { break-inside:avoid !important; }
-    #printReport .hero, #printReport .header { background:#fff !important; color:#17243b !important; }
+    #printReport .hero, #printReport .heroHead, #printReport .metrics,
+    #printReport .groupBox, #printReport .tableBox, #printReport .noteBox {
+      background:#fff !important; color:#17243b !important;
+    }
+    #printReport .boxTitle { background:#f1f5f9 !important; color:#17243b !important; }
+    #printReport table { max-width:100% !important; }
+    #printReport th, #printReport td { overflow-wrap:anywhere !important; }
+    #printReport .groupTable tbody td:last-child,
+    #printReport .individual tbody td:last-child,
+    #printReport .metric strong { font-weight:900 !important; }
+    #printReport .row-green { background:#dceedd !important; }
+    #printReport .row-yellow { background:#fff1c7 !important; }
+    #printReport .row-red { background:#f6dada !important; }
     #printReport img { max-width:100% !important; }
-    #printReport .attendanceTable th, #printReport .attendanceTable td { font-size:7.2pt !important; padding:2.2px 2px !important; }
-    #printReport .attendanceTable th:first-child, #printReport .attendanceTable td:first-child { width:5% !important; }
-    #printReport .attendanceTable th:nth-child(2), #printReport .attendanceTable td:nth-child(2) { width:25% !important; }
-    #printReport .attendanceTable th:nth-child(3), #printReport .attendanceTable td:nth-child(3) { width:11% !important; }
-    #printReport .attendanceTable th:nth-child(n+4), #printReport .attendanceTable td:nth-child(n+4) { width:9.833% !important; }
   `;
   stage.appendChild(style);
   stage.appendChild(clone);
@@ -232,22 +278,12 @@ async function printReportToPdf(){
       if(img.complete) return Promise.resolve();
       return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,2500)});
     }));
-
-    // La primera página contiene el resumen y la segunda la tabla completa.
     const filename='Reporte_Asistencia_AKC_'+(minDate&&maxDate?(fmtShort(minDate).replace(/\//g,'-')+'_'+fmtShort(maxDate).replace(/\//g,'-')):'general')+'.pdf';
     await html2pdf().set({
       margin:[7,7,7,7],
       filename,
       image:{type:'jpeg',quality:0.98},
-      html2canvas:{
-        scale:2,
-        useCORS:true,
-        backgroundColor:'#ffffff',
-        logging:false,
-        scrollX:0,
-        scrollY:0,
-        windowWidth:clone.scrollWidth
-      },
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0,windowWidth:clone.scrollWidth},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
       pagebreak:{mode:['css','legacy'],before:'.tableBox',avoid:['.groupBox','.noteBox','tr']}
     }).from(clone).save();
