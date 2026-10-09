@@ -5,6 +5,7 @@
 <title>Reportes de asistencia · AKC</title>
 <script src="../../../cliente/config.js"></script>
 <script src="../../../cliente/xlsx-reader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#07111f;--panel:#0d1b2d;--line:#20344d;--text:#eef5ff;--muted:#9eb0c6;--blue:#54a7ff;--gold:#c5a45a;--green:#dceedd;--yellow:#fff1c7;--red:#f6dada;--greenText:#24652e;--redText:#8d3030}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0,#123052 0,#07111f 42%,#050b12 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1180px;margin:auto;padding:20px 18px 55px}.top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px}.back{color:#cfe3fa;text-decoration:none}.eyebrow{font-size:11px;letter-spacing:.16em;font-weight:800;color:#68b4ff}.title h1{margin:5px 0;font-size:30px}.title p{margin:0;color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:10px;padding:10px 13px;font-weight:900;font-size:11px;cursor:pointer}.btn.print{background:var(--gold);color:#07111f}.btn.backbtn{background:#102238;color:#dcecff;border:1px solid var(--line)}.selector{background:linear-gradient(135deg,#10243a,#0b1828);border:1px solid var(--line);padding:18px;border-radius:17px}.selector label{display:block;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.selector select{width:100%;background:#071321;color:var(--text);border:1px solid #31506f;border-radius:10px;padding:12px;font-size:16px;outline:none}.period{margin-top:10px;color:#cbd9e8;font-size:12px}.period b{color:#fff}.hidden{display:none!important}.report{margin-top:16px}.printReport{display:none}.hero{background:#f8fafc;color:#17243b;border-radius:18px;padding:18px;border:1px solid #dfe5ec}.heroHead{display:flex;justify-content:space-between;gap:15px;align-items:center;border-bottom:2px solid var(--gold);padding-bottom:10px}.heroLogo{width:125px;height:67px;object-fit:contain}.heroTitle{font-size:21px;font-weight:900}.heroSub{font-size:10px;color:#687386;margin-top:3px}.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}.metric{border:1px solid #dfe5ec;border-radius:11px;padding:10px;background:#fff}.metric small{display:block;color:#667085;font-size:9px;text-transform:uppercase;font-weight:800}.metric strong{display:block;font-size:20px;margin-top:4px}.groupBox,.tableBox,.noteBox{margin-top:12px;border:1px solid #dfe5ec;border-radius:12px;background:#fff;overflow:hidden}.boxTitle{padding:10px 12px;font-weight:900;font-size:13px;background:#f4f7fa}.groupTable,.individual{width:100%;border-collapse:collapse}.groupTable th,.individual th{background:#17243b;color:#fff;padding:8px 7px;font-size:9px;text-align:center}.groupTable td,.individual td{padding:6px 6px;border-top:1px solid #edf0f3;font-size:9px}.groupTable td:not(:first-child),.individual td:not(:nth-child(2)):not(:nth-child(3)){text-align:center}.individual{table-layout:fixed}.individual th:nth-child(1){width:4%}.individual th:nth-child(2){width:23%}.individual th:nth-child(3){width:14%}.individual th:nth-child(4),.individual th:nth-child(5){width:9%}.individual th:nth-child(6),.individual th:nth-child(7){width:7%}.individual th:nth-child(8),.individual th:nth-child(9){width:9%}.individual th:nth-child(10){width:9%}.individual td:nth-child(2),.individual td:nth-child(3){text-align:left}.row-green{background:var(--green)}.row-yellow{background:var(--yellow)}.row-red{background:var(--red)}.pct{font-weight:900}.days{padding:11px 12px;font-size:9.5px;line-height:1.5}.noteBox{padding:11px 12px;background:#f4ebd3;border-color:#d8bf77;font-size:9.5px;line-height:1.5}.doubleText{padding:10px 12px;font-size:9px;line-height:1.5}.loading,.error{padding:40px;text-align:center;color:#667085}.statusLine{margin-top:9px;color:#9eb0c6;font-size:11px}@media(max-width:900px){.metrics{grid-template-columns:repeat(3,1fr)}.hero{overflow:auto}.individual{min-width:820px}.groupTable{min-width:560px}.groupBox,.tableBox{overflow:auto}}@media print{body{background:#fff!important;color:#111!important}.screenReport{display:none!important}.printReport{display:block!important}.wrap{max-width:none;padding:0}.top,.selector,.statusLine{display:none!important}.report{margin:0}.hero{border:0;border-radius:0;padding:0}.heroHead{padding-bottom:8px}.metrics{grid-template-columns:repeat(4,1fr)}.selectedMetric{display:none!important}.metric{padding:7px}.metric strong{font-size:16px}.groupBox,.noteBox{break-inside:avoid;overflow:visible}.tableBox{break-before:page;overflow:visible}.individual{min-width:0}.individual th,.individual td{font-size:7.2px;padding:4px 3px}.groupTable th,.groupTable td{font-size:7.5px;padding:4px}.boxTitle{font-size:10px;padding:6px}.days,.noteBox,.doubleText{font-size:7.5px}.heroLogo{width:105px;height:56px}.report:after{content:""} }
 @page{size:A4 portrait;margin:8mm}@media print{html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;background:#fff!important}.printReport{display:block!important}.screenReport{display:none!important}.individual{width:100%;min-width:0;table-layout:fixed}.individual tr{break-inside:avoid}.individual tr.row-green td{background:#dceedd!important}.individual tr.row-yellow td{background:#fff1c7!important}.individual tr.row-red td{background:#f6dada!important}.groupTable td.row-green,.groupTable td.row-yellow,.groupTable td.row-red{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}.heroLogo{object-fit:contain}}
@@ -68,7 +69,7 @@
 </head>
 <body>
 <div class="wrap">
- <div class="top"><div><div class="eyebrow">AKC · ÁGUILAS DE KIDS CENTER</div><div class="title"><h1>Reportes de asistencia</h1><p>Consulta individual de asistencia y participación.</p></div></div><div class="actions"><button class="btn print" id="printBtn" disabled>IMPRIMIR REPORTE</button></div></div>
+ <div class="top"><div><div class="eyebrow">AKC · ÁGUILAS DE KIDS CENTER</div><div class="title"><h1>Reportes de asistencia</h1><p>Consulta individual de asistencia y participación.</p></div></div><div class="actions"><a class="btn backbtn" href="../index.html" style="display:inline-flex;align-items:center;text-decoration:none">REPORTES</a><button class="btn print" id="printBtn" disabled>DESCARGAR PDF</button></div></div>
  <section class="selector"><label for="athlete">Selecciona a tu atleta</label><select id="athlete"><option value="">Cargando atletas...</option></select><div class="period" id="period">Periodo del reporte: <b>cargando...</b></div></section>
  <div id="status" class="statusLine">Cargando reporte de asistencia...</div>
  <main id="report" class="report screenReport hidden"></main><main id="printReport" class="report printReport"></main>
@@ -181,89 +182,51 @@ async function findLatestFile(){
 }
 async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=printReportToPdf;}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
 
-function printReportToPdf(){
-  const source = $('printReport');
-  if(!source || !source.innerHTML.trim()){
-    alert('El reporte todavía no está listo para imprimir.');
+
+async function printReportToPdf(){
+  const source=$('printReport');
+  if(!source||!source.innerHTML.trim()){
+    alert('El resumen general todavía no está listo. Espera a que termine de cargar.');
     return;
   }
-  const w = window.open('', '_blank');
-  if(!w){
-    alert('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.');
+  if(typeof html2pdf!=='function'){
+    alert('No se pudo cargar el generador de PDF. Comprueba tu conexión e inténtalo de nuevo.');
     return;
   }
-  const baseUrl = new URL('.', window.location.href).href;
-  const html = `<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<base href="${baseUrl}">
-<title>Reporte de asistencia AKC</title>
-<style>
-@page{size:A4 portrait;margin:8mm}
-:root{color-scheme:light;print-color-adjust:exact;-webkit-print-color-adjust:exact}
-*{box-sizing:border-box;forced-color-adjust:none;print-color-adjust:exact;-webkit-print-color-adjust:exact}
-html,body{margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;color-scheme:light!important}
-body{font-size:9px}
-.report{display:block!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important}
-.hero{display:block!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#17243b!important;overflow:visible!important}
-.heroHead{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;border-bottom:2px solid #c5a45a!important;padding:0 0 8px!important;background:#fff!important;color:#17243b!important}
-.heroTitle{font-size:20px!important;font-weight:800!important;color:#17243b!important}
-.heroSub{font-size:9px!important;color:#596579!important}
-.heroLogo{width:100px!important;height:54px!important;object-fit:contain!important}
-.metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;margin:10px 0!important}
-.metric{min-width:0!important;padding:7px!important;border:1px solid #d6dce5!important;border-radius:8px!important;background:#fff!important;color:#17243b!important}
-.metric small{display:block!important;color:#596579!important;font-size:8px!important;font-weight:700!important}
-.metric strong{display:block!important;color:#17243b!important;font-size:16px!important}
-.groupBox,.tableBox,.noteBox{display:block!important;margin-top:9px!important;border:1px solid #d6dce5!important;border-radius:8px!important;background:#fff!important;color:#17243b!important;overflow:visible!important}
-.boxTitle{padding:6px 8px!important;background:#f4f7fa!important;color:#17243b!important;font-weight:800!important}
-.groupTable,.individual{width:100%!important;min-width:0!important;border-collapse:collapse!important;table-layout:fixed!important;background:#fff!important;color:#17243b!important}
-.groupTable th,.individual th{padding:5px 3px!important;background:#17243b!important;color:#fff!important;font-size:7px!important;border:1px solid #d6dce5!important}
-.groupTable td,.individual td{padding:4px 3px!important;border:1px solid #d6dce5!important;font-size:7px!important;color:#17243b!important;background:#fff}
-.individual tr.row-green,.individual tr.row-green td{background:#dceedd!important;color:#17243b!important}
-.individual tr.row-yellow,.individual tr.row-yellow td{background:#fff1c7!important;color:#17243b!important}
-.individual tr.row-red,.individual tr.row-red td{background:#f6dada!important;color:#17243b!important}
-.groupTable td.row-green{background:#dceedd!important;color:#17243b!important}
-.groupTable td.row-yellow{background:#fff1c7!important;color:#17243b!important}
-.groupTable td.row-red{background:#f6dada!important;color:#17243b!important}
-.days,.doubleText{padding:7px 8px!important;background:#fff!important;color:#17243b!important;font-size:8px!important;line-height:1.4!important}
-.noteBox{padding:8px!important;background:#f4ebd3!important;color:#17243b!important;border-color:#d8bf77!important;font-size:8px!important;line-height:1.4!important}
-.pct{font-weight:800!important}
-tr{break-inside:avoid!important;page-break-inside:avoid!important}
-.tableBox{break-before:page!important;page-break-before:always!important}
-img{max-width:100%!important}
-</style>
-</head>
-<body><main class="report printReport">${source.innerHTML}</main>
-<script>
-window.onload=()=>{setTimeout(()=>{window.focus();window.print();},500)};
-window.onafterprint=()=>setTimeout(()=>window.close(),300);
-<\\/script>
-</body></html>`;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  const button=$('printBtn');
+  const oldLabel=button.textContent;
+  button.disabled=true;
+  button.textContent='GENERANDO PDF…';
+  const stage=document.createElement('div');
+  stage.style.cssText='position:fixed;left:-12000px;top:0;width:194mm;background:#ffffff;color:#17243b;z-index:-1;overflow:visible;';
+  const clone=source.cloneNode(true);
+  clone.style.cssText='display:block!important;visibility:visible!important;width:194mm!important;max-width:194mm!important;margin:0!important;padding:0!important;background:#ffffff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;overflow:visible!important;';
+  stage.appendChild(clone);
+  document.body.appendChild(stage);
+  try{
+    const logo=clone.querySelector('.heroLogo');
+    if(logo && !logo.complete){
+      await new Promise(resolve=>{logo.onload=resolve;logo.onerror=resolve;setTimeout(resolve,2500)});
+    }
+    const filename='Reporte_Asistencia_AKC_'+(minDate&&maxDate?(fmtShort(minDate).replace(/\//g,'-')+'_'+fmtShort(maxDate).replace(/\//g,'-')):'general')+'.pdf';
+    await html2pdf().set({
+      margin:[8,8,8,8],
+      filename,
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy'],before:'.tableBox',avoid:['.groupBox','.noteBox','tr']}
+    }).from(clone).save();
+  }catch(e){
+    console.error('Error al generar el PDF de asistencia:',e);
+    alert('No se pudo generar el PDF. Inténtalo de nuevo.');
+  }finally{
+    stage.remove();
+    button.disabled=false;
+    button.textContent=oldLabel;
+  }
 }
+
 init();
-
-// En los subreportes, el botón Volver regresa al menú de los tres reportes.
-(function(){
-  const menuUrl = new URL('../index.html', window.location.href).href;
-  const wireBack = () => {
-    const candidates = [...document.querySelectorAll('a,button,[role="button"]')];
-    const back = candidates.find(el => /volver/i.test((el.textContent||'').trim()));
-    if (!back || back.dataset.akcReportBackBound) return;
-    back.dataset.akcReportBackBound = '1';
-    back.addEventListener('click', function(ev){
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      window.location.href = menuUrl;
-    }, true);
-  };
-  wireBack();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireBack, {once:true});
-})();
-
 </script>
 </body></html>
