@@ -130,4 +130,23 @@ async function renderNormativos(name,scroll=true){
  if(scroll)panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 subscribeNormCloud();
+
+// En los subreportes, el botón Volver regresa al menú de los tres reportes.
+(function(){
+  const menuUrl = new URL('../index.html', window.location.href).href;
+  const wireBack = () => {
+    const candidates = [...document.querySelectorAll('a,button,[role="button"]')];
+    const back = candidates.find(el => /volver/i.test((el.textContent||'').trim()));
+    if (!back || back.dataset.akcReportBackBound) return;
+    back.dataset.akcReportBackBound = '1';
+    back.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.location.href = menuUrl;
+    }, true);
+  };
+  wireBack();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireBack, {once:true});
+})();
+
 </script></body></html>
