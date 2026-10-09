@@ -9,7 +9,7 @@
 @media(max-width:850px){.norm-metrics{grid-template-columns:repeat(2,1fr)}.norm-table th:first-child{width:72%}.norm-table th:last-child{width:28%}}
 @media print{.norm-actions{display:none!important}.norm-table{min-width:0}.norm-table th,.norm-table td{padding:6px 7px;font-size:9px}.norm-table-wrap{overflow:visible;border:1px solid #bbb}.norm-group td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.norm-apparatus{break-inside:avoid-page}}
 </style><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script></head><body><div class="wrap">
-<div class="top"><div class="title"><div class="eyebrow">ÁGUILAS KC</div><h1>Estadísticas de competencias</h1><p>Historial individual y evolución del atleta.</p></div></div>
+<div class="top"><div class="title"><div class="eyebrow">ÁGUILAS KC</div><h1>Estadísticas de competencias</h1><p>Historial individual y evolución del atleta.</p></div><a href="../index.html" style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:12px 16px;border-radius:12px;border:1px solid #213a55;background:#0d1b2d;color:#eaf4ff;text-decoration:none;font-weight:800;font-size:13px">REPORTES</a></div>
 <section class="selector"><label for="athlete">Selecciona al atleta</label><select id="athlete"><option value="">Selecciona un atleta...</option></select><div id="athleteHint" class="tiny">Elige un atleta para ver únicamente sus competencias.</div></section>
 <div id="content" class="hidden">
 <section id="normPanel" class="panel hidden"></section>
@@ -130,23 +130,4 @@ async function renderNormativos(name,scroll=true){
  if(scroll)panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 subscribeNormCloud();
-
-// En los subreportes, el botón Volver regresa al menú de los tres reportes.
-(function(){
-  const menuUrl = new URL('../index.html', window.location.href).href;
-  const wireBack = () => {
-    const candidates = [...document.querySelectorAll('a,button,[role="button"]')];
-    const back = candidates.find(el => /volver/i.test((el.textContent||'').trim()));
-    if (!back || back.dataset.akcReportBackBound) return;
-    back.dataset.akcReportBackBound = '1';
-    back.addEventListener('click', function(ev){
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      window.location.href = menuUrl;
-    }, true);
-  };
-  wireBack();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireBack, {once:true});
-})();
-
 </script></body></html>
