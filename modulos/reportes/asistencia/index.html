@@ -110,7 +110,7 @@ function athleteGroups(arr){
 // Correcciones explícitas de trayectoria indicadas por el entrenador para el reporte actual.
 const CURRENT_OVERRIDES={
  'Maximiliano Diaz Ayala':['GAV6','GAV9'],'Nicolas Capitanachi Vicenttin':['GAV6','GAV9'],'Luis Santiago Sigler Perez':['GAV6','GAV9'],
- 'Mario Bisteni Marín':['GAV6','GAV9'],'Alfredo Jacobo Pimentel':['GAV6','GAV9'],'Bruno Jacobo Pimentel':['GAV6','GAV9'],
+ 'Mario Bisteni Marín':['GAV6','GAV9'],'Alfredo Jacobo Pimentel':['GAV6'],'Bruno Jacobo Pimentel':['GAV6','GAV9'],
  'Alonso Ahedo Carvallo':['GAV9','GAVFIG'],'Brittan Akim Robles Ceballos':['GAV6'],'Ricardo Antonio Jiménez Santos':['GAVFIG']
 };
 function pathFor(name,groups){if(CURRENT_OVERRIDES[name])return CURRENT_OVERRIDES[name];return groups.get(name)?.map(x=>x.group)||[]}
