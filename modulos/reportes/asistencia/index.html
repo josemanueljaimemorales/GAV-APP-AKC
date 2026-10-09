@@ -183,6 +183,7 @@ async function findLatestFile(){
 async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=printReportToPdf;}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
 
 
+
 async function printReportToPdf(){
   const source=$('printReport');
   if(!source||!source.innerHTML.trim()){
@@ -197,23 +198,56 @@ async function printReportToPdf(){
   const oldLabel=button.textContent;
   button.disabled=true;
   button.textContent='GENERANDO PDF…';
+
   const stage=document.createElement('div');
-  stage.style.cssText='position:fixed;left:-12000px;top:0;width:194mm;background:#ffffff;color:#17243b;z-index:-1;overflow:visible;';
+  stage.style.cssText='position:fixed;left:-15000px;top:0;width:194mm;background:#fff;color:#17243b;z-index:-1;overflow:visible;';
   const clone=source.cloneNode(true);
-  clone.style.cssText='display:block!important;visibility:visible!important;width:194mm!important;max-width:194mm!important;margin:0!important;padding:0!important;background:#ffffff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;overflow:visible!important;';
+  clone.style.cssText='display:block!important;visibility:visible!important;width:194mm!important;max-width:194mm!important;margin:0!important;padding:0!important;background:#fff!important;color:#17243b!important;font-family:Arial,Helvetica,sans-serif!important;overflow:visible!important;box-sizing:border-box!important;';
+
+  // El PDF usa estilos propios: no hereda el fondo oscuro de la aplicación.
+  const style=document.createElement('style');
+  style.textContent=`
+    #printReport, #printReport * { box-sizing:border-box !important; }
+    #printReport { background:#fff !important; color:#17243b !important; width:194mm !important; }
+    #printReport .reportPage, #printReport .page, #printReport .sheet { background:#fff !important; color:#17243b !important; }
+    #printReport table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; }
+    #printReport th, #printReport td { overflow-wrap:anywhere !important; word-break:normal !important; }
+    #printReport .tableBox { width:100% !important; overflow:visible !important; }
+    #printReport .summary, #printReport .card, #printReport .groupBox, #printReport .noteBox { break-inside:avoid !important; }
+    #printReport .hero, #printReport .header { background:#fff !important; color:#17243b !important; }
+    #printReport img { max-width:100% !important; }
+    #printReport .attendanceTable th, #printReport .attendanceTable td { font-size:7.2pt !important; padding:2.2px 2px !important; }
+    #printReport .attendanceTable th:first-child, #printReport .attendanceTable td:first-child { width:5% !important; }
+    #printReport .attendanceTable th:nth-child(2), #printReport .attendanceTable td:nth-child(2) { width:25% !important; }
+    #printReport .attendanceTable th:nth-child(3), #printReport .attendanceTable td:nth-child(3) { width:11% !important; }
+    #printReport .attendanceTable th:nth-child(n+4), #printReport .attendanceTable td:nth-child(n+4) { width:9.833% !important; }
+  `;
+  stage.appendChild(style);
   stage.appendChild(clone);
   document.body.appendChild(stage);
+
   try{
-    const logo=clone.querySelector('.heroLogo');
-    if(logo && !logo.complete){
-      await new Promise(resolve=>{logo.onload=resolve;logo.onerror=resolve;setTimeout(resolve,2500)});
-    }
+    const images=[...clone.querySelectorAll('img')];
+    await Promise.all(images.map(img=>{
+      if(img.complete) return Promise.resolve();
+      return new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,2500)});
+    }));
+
+    // La primera página contiene el resumen y la segunda la tabla completa.
     const filename='Reporte_Asistencia_AKC_'+(minDate&&maxDate?(fmtShort(minDate).replace(/\//g,'-')+'_'+fmtShort(maxDate).replace(/\//g,'-')):'general')+'.pdf';
     await html2pdf().set({
-      margin:[8,8,8,8],
+      margin:[7,7,7,7],
       filename,
       image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false,scrollX:0,scrollY:0},
+      html2canvas:{
+        scale:2,
+        useCORS:true,
+        backgroundColor:'#ffffff',
+        logging:false,
+        scrollX:0,
+        scrollY:0,
+        windowWidth:clone.scrollWidth
+      },
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
       pagebreak:{mode:['css','legacy'],before:'.tableBox',avoid:['.groupBox','.noteBox','tr']}
     }).from(clone).save();
