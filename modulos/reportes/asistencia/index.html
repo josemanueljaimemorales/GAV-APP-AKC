@@ -179,7 +179,7 @@ async function findLatestFile(){
  if(!candidates.length){const d=parseFilenameDate(fallback);return {name:fallback,date:d,url:fallback}}
  candidates.sort((a,b)=>b.date-a.date);return candidates[0];
 }
-async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=printReportToPdf;
+async function init(){try{const latest=await findLatestFile();currentFile=latest.name;const rows=await AKC_XLSX.read(latest.url);records=parseRows(rows);if(!records.length)throw Error('El Excel no contiene registros de asistencia.');minDate=records.reduce((m,x)=>!m||x.date<m?x.date:m,null);maxDate=records.reduce((m,x)=>!m||x.date>m?x.date:m,null);const groups=athleteGroups(records);summary=[...new Set(records.map(x=>x.name))].sort((a,b)=>a.localeCompare(b,'es')).map(n=>compute(n,records,groups)).filter(Boolean);$('athlete').innerHTML='<option value="">Selecciona un atleta...</option>'+summary.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');$('period').innerHTML=`Periodo del reporte: <b>${esc(fmtDate(minDate))} al ${esc(fmtDate(maxDate))}</b>`;$('status').textContent=`Archivo activo: ${currentFile}`;$('athlete').onchange=render;buildPrintReport();$('printBtn').onclick=printReportToPdf;}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
 
 function printReportToPdf(){
   const source = $('printReport');
@@ -239,12 +239,31 @@ img{max-width:100%!important}
 <script>
 window.onload=()=>{setTimeout(()=>{window.focus();window.print();},500)};
 window.onafterprint=()=>setTimeout(()=>window.close(),300);
-</script>
+<\\/script>
 </body></html>`;
   w.document.open();
   w.document.write(html);
   w.document.close();
-}}catch(e){console.error(e);$('status').textContent='No se pudo cargar el reporte de asistencia: '+e.message}}
+}
 init();
+
+// En los subreportes, el botón Volver regresa al menú de los tres reportes.
+(function(){
+  const menuUrl = new URL('../index.html', window.location.href).href;
+  const wireBack = () => {
+    const candidates = [...document.querySelectorAll('a,button,[role="button"]')];
+    const back = candidates.find(el => /volver/i.test((el.textContent||'').trim()));
+    if (!back || back.dataset.akcReportBackBound) return;
+    back.dataset.akcReportBackBound = '1';
+    back.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.location.href = menuUrl;
+    }, true);
+  };
+  wireBack();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireBack, {once:true});
+})();
+
 </script>
 </body></html>
