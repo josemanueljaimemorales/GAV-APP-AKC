@@ -153,3 +153,7 @@ button{cursor:pointer}
 .orow.on{background:rgba(0,224,184,.07)}
 .orow .otx{font-size:14px;line-height:1.35}
 .orow small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.okind{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;margin-right:6px;vertical-align:1px}
+.okind.rep{background:rgba(255,179,71,.18);color:var(--warn)}
+.okind.add{background:rgba(0,224,184,.15);color:var(--ok)}
+.orow.repl .otx{opacity:.6}

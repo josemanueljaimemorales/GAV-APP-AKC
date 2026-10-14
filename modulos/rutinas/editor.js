@@ -589,8 +589,10 @@ function renderOAth(){
   }else{
     const m=a.m?.[ap]||{};
     h+=`<div class="list">${(OBL.rut[lv]?.[ap]||[]).map(x=>{const be=x.v!=null;
-      const sub=[be?(x.rep?`Reemplaza #${x.rep.join(' y #')}`:''):'',x.req?`Requiere ${x.req}`:'',x.ex?'Solo una de las opciones':'',x.nota||''].filter(Boolean).join(' · ');
-      return `<label class="orow ${be?'be':''} ${m[x.id]?'on':''}"><input type="checkbox" data-oc="mark" data-v="${esc(x.id)}" ${m[x.id]?'checked':''}><span class="otag">${be?esc(x.id)+' +'+x.v.toFixed(1):'#'+esc(x.id)}</span><span class="otx">${esc(x.t)}${sub?`<small>${esc(sub)}</small>`:''}</span></label>`;}).join('')}</div>`;
+      const sub=[x.req?`Requiere ${x.req}`:'',x.ex?'Solo una de las opciones':'',x.nota||''].filter(Boolean).join(' · ');
+      const kind=be?(x.rep?`<span class="okind rep">Reemplaza #${x.rep.join(' y #')}</span>`:`<span class="okind add">Se agrega</span>`):'';
+      const isRep=!be&&!m[x.id]&&(OBL.rut[lv]?.[ap]||[]).some(z=>z.v!=null&&m[z.id]&&(z.rep||[]).includes(x.id));
+      return `<label class="orow ${be?'be':''} ${m[x.id]?'on':''} ${isRep?'repl':''}"><input type="checkbox" data-oc="mark" data-v="${esc(x.id)}" ${m[x.id]?'checked':''}><span class="otag">${be?esc(x.id)+' +'+x.v.toFixed(1):'#'+esc(x.id)}</span><span class="otx">${isRep?'<span class="okind rep">Reemplazada por BE</span>':''}${kind}${esc(x.t)}${sub?`<small>${esc(sub)}</small>`:''}</span></label>`;}).join('')}</div>`;
   }
   root.innerHTML=h;
 }
@@ -615,7 +617,13 @@ root.addEventListener('change',e=>{
   const t=e.target, k=t.dataset.oc; if(!k)return; const a=S.obl.atletas[ui.oat]; if(!a)return; const ap=ui.oap||'PISO';
   if(k==='nivel'){a.nivel=t.value;a.m=oblDefaults(t.value);a.salto=OBL.salto[t.value][0][0];}
   if(k==='at'){a.at=a.at||{};a.at[ap]=t.checked||undefined;}
-  if(k==='mark'){a.m=a.m||{};a.m[ap]=a.m[ap]||{};if(t.checked)a.m[ap][t.dataset.v]=true;else delete a.m[ap][t.dataset.v];}
+  if(k==='mark'){a.m=a.m||{};a.m[ap]=a.m[ap]||{};const mm=a.m[ap],id=t.dataset.v,items=OBL.rut[String(a.nivel)]?.[ap]||[],x=items.find(z=>z.id===id);
+    if(t.checked){mm[id]=true;
+      if(x&&x.v!=null){(x.rep||[]).forEach(r=>delete mm[r]);
+        if(x.ex)items.filter(z=>z.ex===x.ex&&z.id!==id&&mm[z.id]).forEach(z=>{delete mm[z.id];});}
+      else items.filter(z=>z.v!=null&&mm[z.id]&&(z.rep||[]).includes(id)).forEach(z=>delete mm[z.id]);}
+    else{delete mm[id];
+      if(x&&x.v!=null)(x.rep||[]).forEach(r=>{if(!items.some(z=>z.v!=null&&mm[z.id]&&(z.rep||[]).includes(r)))mm[r]=true;});}}
   if(k==='salto')a.salto=t.value;
   save();render();
 });
@@ -661,12 +669,13 @@ function oblPrintHTML(fecha){
       if(ap==='SALTO'){h+=`<div class="pm">${esc(c.vault||'')} · Base ${f1(c.base)}${c.land?' · Aterrizaje +0.1':''}</div>`;}
       else{const m=a.m?.[ap]||{};
         h+=`<div class="pm">Base ${f1(c.base)} · Bonificaciones +${f1(c.bon)}${c.om?` · Omisiones -${f1(c.om)}`:''}${c.land?' · Aterrizaje +0.1':''}</div><table>`;
+        const repl=new Set((OBL.rut[lv]?.[ap]||[]).filter(z=>z.v!=null&&m[z.id]).flatMap(z=>z.rep||[]));
         (OBL.rut[lv]?.[ap]||[]).forEach(x=>{const be=x.v!=null, done=!!m[x.id];
           if(be&&!done)return;
-          h+=`<tr class="${done?'':'off'}"><td class="ck">${done?'✓':'✗'}</td><td class="oid">${be?esc(x.id)+' +'+x.v.toFixed(1):'#'+esc(x.id)}</td><td>${esc(x.t)}</td></tr>`;});
+          h+=`<tr class="${done?'':'off'}"><td class="ck">${done?'✓':(repl.has(x.id)?'↺':'✗')}</td><td class="oid">${be?esc(x.id)+' +'+x.v.toFixed(1):'#'+esc(x.id)}</td><td>${be?(x.rep?`(Reemplaza #${x.rep.join(' y #')}) `:'(Se agrega) '):''}${esc(x.t)}</td></tr>`;});
         h+=`</table>`;}
       h+=`</article>`;}
-    h+=`</div><footer class="pf">✓ realizado. ✗ parte no realizada. Solo se listan las bonificaciones (BE) que hace el atleta.</footer></section>`;}
+    h+=`</div><footer class="pf">✓ realizado. ↺ parte reemplazada por una BE. ✗ parte no realizada. Solo se listan las bonificaciones (BE) que hace el atleta.</footer></section>`;}
   return h;
 }
 function res_off(c,i,vd){return vd>0&&!c.counted.has(i);}
