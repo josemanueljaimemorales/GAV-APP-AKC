@@ -340,16 +340,37 @@ function nAv(c){return (new Set(c.notes)).size+(c.enotes?.length||0);
 
 /* ---------- guardado ---------- */
 function setSync(c,t){syncState=[c,t];const el=document.querySelector('.sync');if(el){el.className='sync '+c;el.textContent=t;}}
+/* Guardado en la nube por cambio: cada atleta se escribe por separado para que
+   dos dispositivos editando al mismo tiempo no se borren los cambios entre sí. */
+let SENT=null, DOC_EXISTS=false, SAVING=false;
+function curState(){
+  const lib={};for(const n of Object.keys(S.atletas))lib[n]=JSON.stringify({...S.atletas[n],vista:buildVista(n)});
+  const v=oblVista(),obl={},ov={};for(const n of Object.keys(S.obl.atletas||{})){obl[n]=JSON.stringify(S.obl.atletas[n]);ov[n]=JSON.stringify(v.atletas[n]||null);}
+  const al={};for(const [k,x] of Object.entries(S.alias||{}))al[k]=JSON.stringify(x);
+  return{lib,obl,ov,al,orden:JSON.stringify(ORDER),bajas:JSON.stringify(S.bajas||[]),oorden:JSON.stringify(S.obl.orden||[]),obajas:JSON.stringify(S.obl.bajas||[])};
+}
+function fullDoc(c){const P=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k,JSON.parse(v)]));
+  return{atletas:P(c.lib),alias:P(c.al),orden:JSON.parse(c.orden),bajas:JSON.parse(c.bajas),
+    obligatorios:{atletas:P(c.obl),orden:JSON.parse(c.oorden),bajas:JSON.parse(c.obajas),vista:{orden:JSON.parse(c.oorden),atletas:P(c.ov)}}};}
 function save(){
   try{localStorage.setItem(LOCAL,JSON.stringify({...S,orden:ORDER}));}catch(e){}
   clearTimeout(saveTimer);
   if(!cloud){setSync('warn','Guardado en este dispositivo');return;}
-  setSync('','Guardando…');
+  setSync('','Guardando…');SAVING=true;
   saveTimer=setTimeout(async()=>{
-    try{const out={};for(const n of Object.keys(S.atletas))out[n]={...S.atletas[n],vista:buildVista(n)};
-      await cloud.set(JSON.parse(JSON.stringify({atletas:out,alias:S.alias,orden:ORDER,bajas:S.bajas||[],obligatorios:{...S.obl,vista:oblVista()}})));
-      await cloud.update({updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setSync('ok','Guardado en la nube');}
+    try{const cur=curState();
+      if(!DOC_EXISTS||!SENT){await cloud.set({...fullDoc(cur),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});DOC_EXISTS=true;}
+      else{const FP=(...x)=>new firebase.firestore.FieldPath(...x), DEL=firebase.firestore.FieldValue.delete(), u=[];
+        const diff=(a,b,path)=>{for(const k in a)if(a[k]!==b[k])u.push(FP(...path,k),JSON.parse(a[k]));for(const k in b)if(!(k in a))u.push(FP(...path,k),DEL);};
+        diff(cur.lib,SENT.lib,['atletas']);diff(cur.obl,SENT.obl,['obligatorios','atletas']);diff(cur.ov,SENT.ov,['obligatorios','vista','atletas']);diff(cur.al,SENT.al,['alias']);
+        if(cur.orden!==SENT.orden)u.push(FP('orden'),JSON.parse(cur.orden));
+        if(cur.bajas!==SENT.bajas)u.push(FP('bajas'),JSON.parse(cur.bajas));
+        if(cur.oorden!==SENT.oorden)u.push(FP('obligatorios','orden'),JSON.parse(cur.oorden),FP('obligatorios','vista','orden'),JSON.parse(cur.oorden));
+        if(cur.obajas!==SENT.obajas)u.push(FP('obligatorios','bajas'),JSON.parse(cur.obajas));
+        if(u.length)await cloud.update(...u,FP('updatedAt'),firebase.firestore.FieldValue.serverTimestamp());}
+      SENT=cur;setSync('ok','Guardado en la nube');}
     catch(e){console.error(e);setSync('warn','Sin nube: guardado en este dispositivo');}
+    SAVING=false;
   },600);
 }
 
@@ -718,7 +739,7 @@ async function init(){
   }catch(err){root.innerHTML=`<div class="top"><a class="back" href="index.html">← Rutinas</a></div><div class="empty">No se pudo abrir el editor: ${esc(err.message)}</div>`;return;}
   let stored=null;
   try{if(window.firebase){if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);cloud=firebase.firestore().collection(COLLECTION).doc(DOC);
-    const snap=await cloud.get(); if(snap.exists)stored=snap.data(); setSync('ok','Guardado en la nube');}}
+    const snap=await cloud.get(); if(snap.exists){stored=snap.data();DOC_EXISTS=true;} setSync('ok','Guardado en la nube');}}
   catch(e){console.error(e);cloud=null;setSync('warn','Sin nube: guardado en este dispositivo');}
   if(!stored){try{stored=JSON.parse(localStorage.getItem(LOCAL)||'null');}catch(e){}}
   S={atletas:stored?.atletas||{},alias:stored?.alias||{},bajas:stored?.bajas||[],obl:stored?.obligatorios||stored?.obl||{atletas:{},orden:[],bajas:[]}};
@@ -729,9 +750,16 @@ async function init(){
   const lv=readLevels(); let changed=false;
   for(const n of ORDER)if(!S.atletas[n]){S.atletas[n]=seedAthlete(n,lv[nameKey(n)]||'FIG');changed=true;}
   for(const n of Object.keys(S.atletas))if(!ORDER.includes(n))ORDER.push(n);
-  if(changed||typeof oblSeeded!=='undefined')save();
-  if(cloud)cloud.onSnapshot(s=>{if(!s.exists||s.metadata.hasPendingWrites)return;const d=s.data();S.atletas=d.atletas||S.atletas;S.bajas=d.bajas||S.bajas;if(d.orden)ORDER=[...new Set([...d.orden.filter(n=>S.atletas[n]),...ORDER.filter(n=>S.atletas[n])])];for(const n in S.atletas)delete S.atletas[n].vista;S.alias=d.alias||S.alias;if(d.obligatorios){S.obl=d.obligatorios;delete S.obl.vista;}
-    if(document.activeElement?.tagName!=='INPUT')render();},e=>console.error(e));
+  if(DOC_EXISTS)SENT=curState();
+  if(changed||typeof oblSeeded!=='undefined'||!DOC_EXISTS)save();
+  if(cloud)cloud.onSnapshot(s=>{if(!s.exists||s.metadata.hasPendingWrites||SAVING)return;const d=s.data();DOC_EXISTS=true;
+    S.atletas=d.atletas||{};for(const n in S.atletas)delete S.atletas[n].vista;S.bajas=d.bajas||[];S.alias=d.alias||{};
+    ORDER=[...new Set([...(d.orden||[]).filter(n=>S.atletas[n]),...Object.keys(S.atletas)])];
+    if(d.obligatorios){S.obl={atletas:d.obligatorios.atletas||{},orden:d.obligatorios.orden||[],bajas:d.obligatorios.bajas||[]};}
+    SENT=curState();
+    if(ui.view==='athlete'&&ui.atleta&&!S.atletas[ui.atleta]){ui.view='list';ui.atleta=null;}
+    if(ui.view==='oath'&&ui.oat&&!S.obl.atletas[ui.oat]){ui.view='olist';ui.oat=null;}
+    const ae=document.activeElement?.tagName;if(ae!=='INPUT'&&ae!=='TEXTAREA'&&ae!=='SELECT')render();},e=>console.error(e));
   render();
 }
 const PASS_HASH='edef2f146f863341daae63d0bf0b1e8aa49b805e273a6e6ca559e40dbb22e6d6';
