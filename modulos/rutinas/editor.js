@@ -25,15 +25,18 @@ function table(ap,nivel){return nivel==='N8'&&ap==='ARZON'?'N8ARZON':'FIG';}
 
 /* ---------- búsqueda ---------- */
 const STOP=new Set(['con','en','de','del','la','el','a','al','o','y','tambien','por','desde','lc','las','los','un','una','s']);
-const SYN={adelante:'ad',adel:'ad',ade:'ad',frente:'ad',atras:'at',atr:'at',agrupado:'agr',agru:'agr',agrup:'agr',carpado:'carp',carpa:'carp',c:'agr',v:'carp',extendido:'ext',extendida:'ext',giro:'g',giros:'g',mortal:'mort',mortales:'mort',doble:'dob',triple:'tri',piernas:'p',abiertas:'ab',apoyo:'ap',invertido:'inv',salida:'sal'};
+const SYN={fwd:'ad',forward:'ad',bwd:'at',backward:'at',back:'at',str:'ext',straight:'ext',stretched:'ext',layout:'ext',tuck:'agr',tucked:'agr',t:'g',pike:'carp',piked:'carp',p:'carp',double:'dob',dbl:'dob',salto:'mort',turn:'g',turns:'g',w:'con',with:'con',adelante:'ad',adel:'ad',ade:'ad',frente:'ad',atras:'at',atr:'at',agrupado:'agr',agru:'agr',agrup:'agr',carpado:'carp',carpa:'carp',c:'agr',v:'carp',extendido:'ext',extendida:'ext',giro:'g',giros:'g',mortal:'mort',mortales:'mort',doble:'dob',triple:'tri',piernas:'p',abiertas:'ab',apoyo:'ap',invertido:'inv',salida:'sal'};
 function canon(s){
   s=' '+nk(s)+' ';
-  s=s.replace(/ doble giro y medio /g,' 5/2 g ').replace(/ giro y medio /g,' 3/2 g ').replace(/ doble giro /g,' 2/1 g ').replace(/ triple giro /g,' 3/1 g ').replace(/ medio giro /g,' 1/2 g ');
+  s=s.replace(/(\d\/\d)([a-z])/g,'$1 $2')
+   .replace(/ (dos|2) giros? y medio /g,' 5/2 g ').replace(/ (uno|un|1) giro y medio /g,' 3/2 g ').replace(/ (tres|3) giros? y medio /g,' 7/2 g ')
+   .replace(/ (dos|2) giros /g,' 2/1 g ').replace(/ (tres|3) giros /g,' 3/1 g ').replace(/ (cuatro|4) giros /g,' 4/1 g ').replace(/ giro completo /g,' 1/1 g ')
+   .replace(/ doble giro y medio /g,' 5/2 g ').replace(/ giro y medio /g,' 3/2 g ').replace(/ doble giro /g,' 2/1 g ').replace(/ triple giro /g,' 3/1 g ').replace(/ medio giro /g,' 1/2 g ');
   return s.trim().split(' ').map(t=>SYN[t]||t).filter(t=>t&&!STOP.has(t));
 }
 let INDEX=[];
 function buildIndex(){
-  INDEX=Object.entries(CAT).map(([k,e])=>({k,toks:canon(e.d)}));
+  INDEX=Object.entries(CAT).map(([k,e])=>({k,toks:canon(e.d+' '+(e.en||''))}));
 }
 function search(q,ap,nivel){
   const tab=table(ap,nivel), qn=nk(q), qt=canon(q); if(!qn)return[];
@@ -43,6 +46,7 @@ function search(q,ap,nivel){
   const pre=`${tab}|${ap}|`;
   for(const src of [S.alias,ALIAS]) for(const [ak,k] of Object.entries(src)){
     if(!ak.startsWith(pre)||!CAT[k])continue; const an=ak.slice(pre.length);
+    {const ct=canon(CAT[k].d), ca=canon(an); if((ct.includes('dob')&&!ca.includes('dob'))||(ct.includes('tri')&&!ca.includes('tri')))continue;}
     let sc=0; if(an===qn)sc=3; else if(an.startsWith(qn))sc=2.4; else if(an.includes(qn))sc=2;
     else{const at=canon(an);const hit=qt.filter(t=>at.some(a=>a.startsWith(t))).length;if(hit===qt.length&&hit)sc=1.6;}
     if(sc)add(k,sc,an);
@@ -444,7 +448,7 @@ function editPanel(r,i,a){
     h+=`<label>Conexión manual con "${esc(rowsA[i+1].n)}"<select data-f="cvm" data-i="${i}"><option value="" ${cur===''?'selected':''}>No, solo según reglas</option><option value="0.1" ${cur==='0.1'?'selected':''}>Sí, 0.1</option><option value="0.2" ${cur==='0.2'?'selected':''}>Sí, 0.2</option></select></label>`;}
   if(ui.ap==='FIJA'&&r.g===2)h+=`<label>Al agarrar continúa con<select data-f="gig" data-i="${i}"><option value="" ${!r.gig?'selected':''}>Según el siguiente elemento</option><option value="gigante" ${r.gig==='gigante'?'selected':''}>Cae a gigante</option><option value="molino" ${r.gig==='molino'?'selected':''}>Cae a molino</option></select></label>`;
   if(ui.ap==='FIJA')h+=`<label class="opt"><input type="checkbox" data-f="ct" data-i="${i}" ${r.ct?'checked':''}> Después de este elemento hay cambio de toma (sin valor)</label>`;
-  if(r.k&&CAT[r.k])h+=`<small style="color:var(--muted)">${esc(CAT[r.k].d)}</small>`;
+  if(r.k&&CAT[r.k])h+=`<small style="color:var(--muted)">${esc(CAT[r.k].d)}${CAT[r.k].en&&CAT[r.k].en!==CAT[r.k].d?`<br><i>Código en inglés: ${esc(CAT[r.k].en)}</i>`:''}${CAT[r.k].corr?'<br>Traducción corregida con el Código en inglés.':''}</small>`;
   return h+`</div>`;
 }
 function renderSug(q,target){
@@ -454,7 +458,7 @@ function renderSug(q,target){
   let h='<div class="sug">';
   for(const s of res){const e=CAT[s.k];const r=rowFromKey(s.k);
     const tag=r.t==='JA'?'Juvenil A · 0.1':ui.ap==='SALTO'?`${keyLabel(r)} · ${e.v??'-'}`:`${keyLabel(r)} · ${r.l} ${(LV[r.l]||0).toFixed(1)}`;
-    h+=`<button data-act="pick" data-k="${esc(s.k)}"><b>${esc(s.name?s.name.replace(/^./,c=>c.toUpperCase()):e.d)}</b><small><span class="k">${esc(tag)}</span> · ${esc(e.d)}</small></button>`;}
+    h+=`<button data-act="pick" data-k="${esc(s.k)}"><b>${esc(s.name?s.name.replace(/^./,c=>c.toUpperCase()):e.d)}</b><small><span class="k">${esc(tag)}</span> · ${esc(e.d)}${e.en&&e.en!==e.d?`<br><i>EN: ${esc(e.en)}</i>`:''}</small></button>`;}
   h+=`<button data-act="manual"><b>Agregar "${esc(q)}" a mano</b><small>Tú indicas grupo y valor</small></button></div>`;
   box.innerHTML=h;
 }
