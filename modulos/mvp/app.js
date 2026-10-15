@@ -87,20 +87,36 @@ function scoreFor(name,day){
   return Number((data.scores[name]||{})[day]||0);
 }
 function totalFor(name){return DAYS.reduce((a,d)=>a+scoreFor(name,d),0);}
+const DAY_NAMES={L:"Lunes",M:"Martes",X:"Miércoles",J:"Jueves",V:"Viernes",S:"Sábado"};
+// Día que se está registrando: por defecto hoy (domingo -> sábado). Se conserva al actualizar la pantalla.
+let selDay=new Date().getDay()===0?"S":DAYS[new Date().getDay()-1];
+function escHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function dayTotal(d){return ATHLETES.reduce((a,x)=>a+scoreFor(x.name,d),0);}
+function renderDayPicker(){
+  // Solo de lunes a hoy (el conteo se reinicia cada lunes). En domingo se muestran los 6 días.
+  const hoy=new Date().getDay(),visibles=hoy===0?DAYS:DAYS.slice(0,hoy);
+  document.getElementById("dayPicker").innerHTML=visibles.map(d=>`<button type="button" class="day-btn" data-day="${d}" aria-pressed="${d===selDay}"><b>${DAY_NAMES[d]}</b><small>${dayTotal(d)} MVP</small></button>`).join("");
+  document.getElementById("dayNow").textContent=DAY_NAMES[selDay];
+}
+function setDay(d){selDay=d;renderRecords();}
 function groupHtml(block){
   const groups=GROUPS.filter(g=>g.block===block);
   let html=`<div class="block-title">${block==="Bloque 1"?"🟦":"🟩"} ${block} <span>${block==="Bloque 1"?"GAV 4 + GAV 5":"GAV 6 + GAV 9 + GAV FIG"}</span></div>`;
   groups.forEach(g=>{
-    html+=`<div class="group-title">${g.title}</div><div class="table-wrap"><table><thead><tr><th>Atleta</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}<th>TOTAL</th></tr></thead><tbody>`;
+    html+=`<div class="group-title">${g.title}</div><div class="rec-list">`;
     g.athletes.forEach(name=>{
-      html+=`<tr><td>${name}</td>${DAYS.map(d=>`<td><button class="count-btn" onclick="addScore('${esc(name)}','${d}')" title="Agregar MVP">${scoreFor(name,d)}</button></td>`).join("")}<td class="total">${totalFor(name)}</td></tr>`;
+      const n=scoreFor(name,selDay),e=escHtml(name);
+      html+=`<div class="rec-row${n?" has":""}"><div class="rec-name">${e}<small>Semana: ${totalFor(name)}</small></div>`+
+        `<div class="rec-count" aria-label="${n} MVP el ${DAY_NAMES[selDay]}">${n}</div>`+
+        `<button type="button" class="rec-plus" data-name="${e}" data-delta="1" aria-label="Sumar 1 MVP a ${e}">+1</button></div>`;
     });
-    html+="</tbody></table></div>";
+    html+="</div>";
   });
   return html;
 }
 function esc(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
 function renderRecords(){
+  renderDayPicker();renderUndo();
   document.getElementById("recordContent").innerHTML=groupHtml("Bloque 1")+groupHtml("Bloque 2");
   document.getElementById("weekLabel").textContent=weekLabel();
 }
@@ -140,10 +156,40 @@ function checkPassword(){
   if(action==="records"){document.getElementById("records").classList.remove("hidden");renderRecords();document.getElementById("records").scrollIntoView({behavior:"smooth"});}
   if(action==="upload"){document.getElementById("upload").classList.remove("hidden");document.getElementById("upload").scrollIntoView({behavior:"smooth"});}
 }
-async function addScore(name,day){
+// Historial de cambios hechos en este dispositivo, para "Deshacer último".
+let historial=[];
+try{historial=JSON.parse(sessionStorage.getItem("AKC_MVP_HISTORIAL")||"[]");}catch(e){}
+function guardarHistorial(){try{sessionStorage.setItem("AKC_MVP_HISTORIAL",JSON.stringify(historial.slice(-50)));}catch(e){}}
+function renderUndo(){
+  const b=document.getElementById("undoBtn");if(!b)return;
+  const u=historial[historial.length-1];
+  b.disabled=!u;
+  b.title=u?`Deshacer: ${u.delta>0?"+1":"−1"} a ${u.name} (${DAY_NAMES[u.day]})`:"No hay cambios para deshacer";
+}
+async function undoLast(){
+  const u=historial[historial.length-1];if(!u)return;
+  if(!confirm(`¿Deshacer el último cambio?\n\n${u.delta>0?"+1":"−1"} a ${u.name} (${DAY_NAMES[u.day]})`))return;
+  historial.pop();guardarHistorial();
+  await addScore(u.name,u.day,-u.delta,false);
+  toastMvp(`Se deshizo: ${u.delta>0?"+1":"−1"} a ${u.name} (${DAY_NAMES[u.day]})`);
+}
+function toastMvp(t){const e=document.getElementById("mvpToast");if(!e)return;e.textContent=t;e.classList.add("show");clearTimeout(window.__mt);window.__mt=setTimeout(()=>e.classList.remove("show"),2600);}
+async function addScore(name,day,delta=1,registrar=true){
+  const nuevo=Math.max(0,scoreFor(name,day)+delta);
+  if(nuevo===scoreFor(name,day)){renderUndo();return;}
+  if(registrar){historial.push({name,day,delta});guardarHistorial();}
   if(!data.scores[name])data.scores[name]={};
-  data.scores[name][day]=scoreFor(name,day)+1;
-  renderRecords();renderScores();await saveScoreCloud(name,day);
+  data.scores[name][day]=nuevo;
+  renderRecords();renderScores();saveLocal();
+  if(!ref){cloudFail("sin conexión");return;}
+  try{
+    const campo=new firebase.firestore.FieldPath("scores",name,day);
+    await db.runTransaction(async t=>{
+      const snap=await t.get(ref);
+      const actual=Number(((snap.data()||{}).scores||{})[name]?.[day]||0);
+      t.update(ref,campo,Math.max(0,actual+delta),"updatedAt",firebase.firestore.FieldValue.serverTimestamp());
+    });
+  }catch(e){cloudFail(e);}
 }
 function confirmReset(){
   if(!confirm("¿Reiniciar todos los registros de MVP de la semana? Las fotos no se borrarán."))return;
@@ -167,4 +213,9 @@ function compressImage(file){
 }
 function goBack(){if(window.parent!==window){window.parent.goHome?.();}else history.back();}
 document.addEventListener("keydown",e=>{if(!document.getElementById("passwordModal").classList.contains("hidden")){if(e.key==="Enter")checkPassword();if(e.key==="Escape")closePassword();}});
+document.addEventListener("click",e=>{
+  const d=e.target.closest(".day-btn");if(d){setDay(d.dataset.day);return;}
+  if(e.target.closest("#undoBtn")){undoLast();return;}
+  const b=e.target.closest(".rec-plus");if(b)addScore(b.dataset.name,selDay,1);
+});
 window.addEventListener("load",initCloud);
