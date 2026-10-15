@@ -591,7 +591,7 @@ function renderOList(){
     ${ui.oerr?`<div class="badge b">${esc(ui.oerr)}</div>`:''}<div class="actions"><button class="btn" data-act="oaddok">Agregar</button><button class="btn ghost" data-act="oaddno">Cancelar</button></div></div>`;
   if(ui.oask)h+=`<div class="score addbox"><b>¿Eliminar a ${esc(ui.oask)}?</b><small>Se borra su selección de elementos y deja de aparecer en Obligatorios.</small><div class="actions"><button class="btn danger" data-act="odelok">Eliminar</button><button class="btn ghost" data-act="odelno">Cancelar</button></div></div>`;
   h+=`<div class="cards">`;
-  const _oprint=`<div class="actions printbar"><button class="btn" data-act="oprint">Imprimir obligatorios</button><small>Una hoja tamaño carta por atleta.</small></div>`;
+  const _oprint=`<div class="actions printbar"><button class="btn" data-act="oprint">Imprimir obligatorios</button><small>Una hoja tamaño carta horizontal por atleta.</small></div>`;
   for(const n of O.orden){const a=O.atletas[n];if(!a)continue;const t=oblTotals(a);
     h+=ui.odel?`<button class="card del" data-act="odelask" data-v="${esc(n)}"><span><b>${esc(n)}</b><span class="lv">Nivel ${esc(a.nivel)}</span></span><span class="xdel">Eliminar</span></button>`
       :`<button class="card" data-act="oopen" data-v="${esc(n)}"><span><b>${esc(n)}</b><span class="lv">Nivel ${esc(a.nivel)}</span></span><span class="aa">${f1(t.aa)}</span></button>`;}
@@ -682,8 +682,36 @@ function printAll(build){
   area.innerHTML=h;
   const imgs=[...area.querySelectorAll('img')];
   Promise.all(imgs.map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r;}))).then(()=>{
+    if(typeof build==='function')fitOblSheets(area);
     const prev=document.title, d=new Date(); document.title=`${PRINT_PREF} ${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     window.print(); setTimeout(()=>{document.title=prev;},1000);});
+}
+/* Obligatorios: acomoda los 6 aparatos en 3 columnas (opción A o B, la que deje letra más grande) y elige por atleta
+   la letra más grande con la que todo cabe en una hoja carta horizontal. */
+function fitOblSheets(area){
+  const pxmm=96/25.4, alto=199.9*pxmm*0.98; // alto útil de la hoja (215.9 mm - márgenes), con 2 % de holgura
+  area.classList.add('measuring');
+  area.querySelectorAll('.osheet').forEach(sh=>{
+    const grid=sh.querySelector('.pgrid'), cards=[...grid.querySelectorAll(':scope > .pap')];
+    grid.innerHTML='';const cols=[0,1,2].map(()=>{const d=document.createElement('div');d.className='ocol';grid.appendChild(d);return d;});
+    const acomodar=fs=>{
+      sh.style.setProperty('--fs',fs+'px');
+      cards.forEach(c=>cols[0].appendChild(c));
+      const hs=cards.map(c=>c.getBoundingClientRect().height+2.5*pxmm);
+      // Orden de las tarjetas: Piso, Hongo/Arzón, Anillos, Salto, Paralelas, Fija (OAPS).
+      // Opción A: Piso+Arzón | Anillos+Salto+Paralelas | Fija.  Opción B: Piso+Arzón | Anillos+Salto | Paralelas+Fija.
+      const OPCIONES=[[0,0,1,1,1,2],[0,0,1,1,2,2]];
+      let mejor=OPCIONES[0],maxMejor=Infinity;
+      OPCIONES.forEach(asig=>{const suma=[0,0,0];asig.forEach((cl,i)=>suma[cl]+=hs[i]||0);const m=Math.max(...suma);if(m<maxMejor){maxMejor=m;mejor=asig;}});
+      cards.forEach((c,i)=>cols[mejor[i]].appendChild(c));
+      return sh.getBoundingClientRect().height;
+    };
+    let lo=7,hi=18;
+    for(let k=0;k<12;k++){const mid=(lo+hi)/2;if(acomodar(mid)<=alto)lo=mid;else hi=mid;}
+    // Verificación final: si con la letra elegida no cabe, se baja poco a poco hasta que quepa.
+    while(acomodar(lo)>alto&&lo>6)lo-=0.25;
+  });
+  area.classList.remove('measuring');
 }
 function oblPrintHTML(fecha){
   let h='';
