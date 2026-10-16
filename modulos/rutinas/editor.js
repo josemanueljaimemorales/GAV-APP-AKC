@@ -22,8 +22,15 @@ function nk(s){return String(s??'').replace(/½/g,' 1/2 ').replace(/¼/g,' 1/4 '
 // Piso: elementos que cubren la balanza en una pierna (planchas I.61/I.62, arabesca, flick facial o salto con giro a facial).
 const esBalanza=r=>r.k==='PISO|1|61'||r.k==='PISO|1|62'||/ (arabesc[a-z]*|fli(c|ck|k)( flac)? facial|salto( con)?( [a-z0-9/]+)? giro a facial) /.test(' '+nk(r.n)+' ');
 // Paralelas: elementos que llegan a manos balanceando atrás, y lo que puede seguir sin valor en la misma dirección.
-const llegaAManos=r=>r.k==='PARALELAS|2|1'||/ (vuelo|imp(ulso)? a manos) /.test(' '+nk(r.n)+' ');
+// Paralelas: elementos que terminan balanceando atrás. La braquial subida de pecho, si no lleva corte adelante,
+// termina por naturaleza con un vuelo atrás (criterio de Manu).
+const llegaAManos=r=>{const t=' '+nk(r.n)+' ';return r.k==='PARALELAS|2|1'||/ (vuelo|imp(ulso)? a manos) /.test(t)||(/ braq(uial)? subida de pecho /.test(t)&&!/ corte /.test(t));};
 const PV_OPC={medio:'Cambio (½ giro)',giro:'Giro completo',healy:'Healy',gatson:'Gatson'};
+// Barra fija: después de llegar a parada de manos (alemana/kip a manos) puede hacer un cambio sencillo sin valor y seguir a gigante.
+const FV_OPC={cs:'Cambio sencillo'};
+const PV_TXT=v=>PV_OPC[v]||FV_OPC[v]||'';
+const kipAManos=r=>{const t=' '+nk(r.n+' '+(r.k&&CAT[r.k]?CAT[r.k].d:''))+' ';
+  return / (alemana|kip|kipe|kippe|dominacion at(ras)?) /.test(t)&&/ (a manos|apoyo invertido|ap inv) /.test(t);};
 const nameKey=v=>String(v??'').toUpperCase().replace(/\s+/g,'');
 function normLevel(v){v=String(v||'').toUpperCase().replace(/\s+/g,'');if(v==='NFIG'||v==='FIG')return'FIG';const m=v.match(/^N?(7|8|9|10)$/);return m?'N'+m[1]:'FIG';}
 function table(ap,nivel){return nivel==='N8'&&ap==='ARZON'?'N8ARZON':'FIG';}
@@ -157,9 +164,22 @@ function readLevels(){
 function valOf(r,nivel){if(r.t==='JA')return (nivel==='N7'||nivel==='N8')?.1:0;if(r.v!=null&&!r.l)return r.v;return LV[r.l]||0;}
 function grpOf(r,ap,nivel){
   if(r.t==='JA'||!r.g)return null;
-  if(nivel==='N8'){if(r.gx)return r.gx;if(ap==='ANILLOS'&&r.g===3)return 2;}
+  // En Anillos N8 el grupo III solo lo da la parada de manos (un "III" marcado a mano en otro elemento ya no aplica).
+  if(nivel==='N8'&&ap==='ANILLOS'){if(n8ParadaAnillos(r))return 3;if(r.gx&&r.gx!==3)return r.gx;return r.g===3?2:r.g;}
+  if(nivel==='N8'){if(r.gx)return r.gx;
+    if(ap==='FIJA'&&r.g===3&&n8FijaAdelante(r))return 2;}
   return r.g;
 }
+// Tabla de grupos de USAG para nivel 8 (MDP, "Table of Element Groups and Rules for Level 8 Competition"):
+// Anillos: grupo III = parada de manos sostenida 2 s (llegue a fuerza o con impulso); cualquier otro elemento FIG II o III cubre el grupo II.
+// Barra fija: grupo II = cualquier soltada o elemento en la barra hacia adelante / toma cubital (Endo, Adler, Weiler…);
+// grupo III = elementos en la barra hacia atrás con toma palmar (Stalder, giro libre atrás…).
+function n8ParadaAnillos(r){const en=(r.k&&CAT[r.k]?.en)||'';
+  if(en)return /\bto (hdst|handstand)/i.test(en)&&!/\b(through|thr\.)/i.test(en);
+  const t=' '+nk(r.n)+' ';return / (parada de manos|apoyo invertido|ap inv|pdm|a manos) /.test(t)&&!/ (desde|por el|por la) /.test(t);}
+function n8FijaAdelante(r){const c=r.k&&CAT[r.k], t=' '+nk(r.n+' '+(c?(c.en||'')+' '+c.d:''))+' ';
+  if(/ stalder /.test(t))return false;
+  return / (fwd|endo|adler|weiler|whaler|el grip|ungr|steineman|koste|carballo|quintero|fuentes|baldauf|adelante|al frente|cubital) /.test(t);}
 function dirOf(it){if(it.grp===2)return'ad';if(it.grp===3)return'at';
   const t=' '+nk((it.r.k&&CAT[it.r.k]?CAT[it.r.k].d:'')+' '+it.r.n)+' ';
   if(/ (adelante|ad|frente|ade|adel) /.test(t))return'ad'; if(/ (atras|at|atr) /.test(t))return'at'; return'';}
@@ -249,9 +269,9 @@ function compute(ap,rows,nivel,plantada,opt){
   applySpecial(ap,items,res,nivel);
   Object.entries(res.why).forEach(([i,w])=>res.notes.push(`${rows[i].n}: ${w}.`));
   res.enotes=res.enotes||[];
-  if(ap==='FIJA'&&nivel!=='N7'&&nivel!=='N8')rows.forEach((a,i)=>{const b=rows[i+1];if(!b||a.ct)return;
-    const ta=' '+nk(a.n+' '+(a.k&&CAT[a.k]?CAT[a.k].d:''))+' ', tb=' '+nk(b.n+' '+(b.k&&CAT[b.k]?CAT[b.k].d:''))+' ';
-    const kipHS=/ (alemana|kip|kipe|kippe|dominacion at(ras)?) /.test(ta)&&/ (a manos|apoyo invertido|ap inv) /.test(ta);
+  if(ap==='FIJA'&&nivel!=='N7'&&nivel!=='N8')rows.forEach((a,i)=>{const b=rows[i+1];if(!b||a.ct||FV_OPC[a.pv])return;
+    const tb=' '+nk(b.n+' '+(b.k&&CAT[b.k]?CAT[b.k].d:''))+' ';
+    const kipHS=kipAManos(a);
     const atras=/ (gigante|molino at(ras)?|stalder|quinta|salvada) /.test(tb)||/ 1\/2 g .*cubital/.test(tb);
     if(kipHS&&atras&&!/ (molino ad(elante)?|endo) /.test(tb))res.enotes.push(`Posible contrabalanceo: "${a.n}" y después "${b.n}". Error de composición -0.30 (jurado E) si van seguidos.`);});
   // Paralelas (FIG, N9 y N10): después de llegar a manos balanceando atrás (vuelo o impulso a manos),
@@ -261,7 +281,8 @@ function compute(ap,rows,nivel,plantada,opt){
   if(ap==='PARALELAS'&&nivel!=='N7'&&nivel!=='N8')rows.forEach((a,i)=>{const b=rows[i+1];if(!b||a.ct)return;
     const nb=' '+nk(b.n)+' ';
     const aManos=llegaAManos(a)&&!a.pv;
-    const baja=/ (moy|tippelt|tippet|molino|gigante|kenmotsu|bhavsar|babsar|diamidov|diamidob|makuts|felge|peters) /.test(nb);
+    // La salida hacia atrás (último elemento) también va en contra del balanceo.
+    const baja=/ (moy|tippelt|tippet|molino|gigante|kenmotsu|bhavsar|babsar|diamidov|diamidob|makuts|felge|peters) /.test(nb)||(i+1===rows.length-1&&/ atras /.test(nb)&&!/ adelante /.test(nb));
     if(aManos&&baja)res.enotes.push(`Posible contrabalanceo: "${a.n}" y después "${b.n}". -0.30 del jurado E (después de llegar a manos balanceando atrás, el siguiente elemento debe seguir en la misma dirección o ir precedido de un elemento de fuerza). Si después del vuelo hace un cambio, giro, Healy o Gatson sin capturarlo, márcalo en el elemento.`);});
   const valued=items.filter(x=>x.val>0);
   const n7=nivel==='N7', n8=nivel==='N8', usag=n7||n8;
@@ -317,11 +338,14 @@ function compute(ap,rows,nivel,plantada,opt){
   }
   // Bonos
   if(n8&&dis&&dis.val>=.3)res.bon+=dis.val>=.5?.4:dis.val>=.4?.3:.2;
-  if(plantada&&!n7){
-    if(n8){if(dis)res.bon+=dis.val>=.4?.4:dis.val>=.3?.3:dis.val>=.2?.2:0;}
-    else if(ap!=='ARZON'){const last=ap==='PISO'?items.filter(x=>res.counted.has(x.i)).pop():dis;
+  // N8: el bono por plantar la salida no se calcula aquí; lo deciden los jueces en el momento (criterio de Manu).
+  if(plantada&&!usag){
+    if(ap!=='ARZON'){const last=ap==='PISO'?items.filter(x=>res.counted.has(x.i)).pop():dis;
       if(last&&last.val>=.3)res.bon+=.1; else res.notes.push('Bono por plantar requiere salida C o mayor.');}
   }
+  // N8 Barra fija: cada soltada (grupo II) de valor C o mayor que cuenta da +0.3 (USAG MDP 2025-2028, boletines #2-#4).
+  if(n8&&ap==='FIJA'){const sol=chosen.filter(x=>x.r.g===2&&x.val>=.3);
+    if(sol.length){res.bon+=.3*sol.length;res.notes.push(`Bono N8 por soltada C o mayor: +0.3 × ${sol.length} (${sol.map(x=>x.r.n).join(', ')}).`);}}
   res.bon=r1(res.bon);
   // Deducción neutral
   const nEl=valued.length;
@@ -443,7 +467,7 @@ function metaLine(r,res,i){
   if(r.t==='JA'&&a.nivel!=='N7'&&a.nivel!=='N8')b+='<span class="badge b">Juvenil A: sin valor en '+a.nivel+'</span>';
   if(r.ct)b+='<span class="badge i">A cambio de toma</span>';
   if(r.gig)b+=`<span class="badge i">Cae a ${r.gig}</span>`;
-  if(r.pv&&PV_OPC[r.pv])b+=`<span class="badge i">Luego: ${PV_OPC[r.pv]} (sin valor)</span>`;
+  if(PV_TXT(r.pv))b+=`<span class="badge i">Luego: ${PV_TXT(r.pv)} (sin valor)</span>`;
   if(r.nf)b+='<span class="badge b">No está en el Código 2025: revisa ID</span>';
   if(r.ex)b+=`<span class="badge w">${esc(r.ex)}</span>`;
   return esc(m)+(b?'<div>'+b+'</div>':'');
@@ -457,7 +481,7 @@ function renderAthlete(){
   if(ui.ap!=='SALTO'){
     h+=`<div class="metrics"><div><b>${f1(res.dv)}</b><small>Dificultad</small></div><div><b>${f1(res.eg)}</b><small>Grupos</small></div><div><b>${f1(res.cv)}</b><small>Conexión</small></div><div><b>${f1(res.bon)}</b><small>Bonos</small></div><div><b>${res.nd?'-'+f1(res.nd):'0.0'}</b><small>Ded. jurado D</small></div></div>`;
     h+=`<div class="chips">${res.egDet.map(d=>`<span class="chip ${d.hit?'hit':'miss'}">${d.sal?'Salida':'Grupo '+ROM[d.g]}${d.v!=null?' '+d.v.toFixed(1):''}</span>`).join('')}</div>`;
-    if(a.nivel!=='N7')h+=`<label class="opt"><input type="checkbox" data-act="plant" ${a.p?.[ui.ap]?'checked':''}> Salida plantada (bono)</label>`;
+    if(a.nivel!=='N7'&&a.nivel!=='N8')h+=`<label class="opt"><input type="checkbox" data-act="plant" ${a.p?.[ui.ap]?'checked':''}> Salida plantada (bono)</label>`;
     // La casilla solo se muestra si la rutina no tiene ya un elemento de balanza.
     if(ui.ap==='PISO'&&!(a.r.PISO||[]).some(esBalanza))h+=`<label class="opt"><input type="checkbox" data-act="balpiso" ${a.p?.balPiso?'checked':''}> Tiene balanza en una pierna en la coreografía (fuera de los 8)</label>`;
   }else h+=`<div class="metrics"><div><b>${res.vaults[0]?res.vaults[0].v.toFixed(1):'-'}</b><small>Salto 1</small></div><div><b>${res.vaults[1]?res.vaults[1].v.toFixed(1):'-'}</b><small>Salto 2</small></div>${res.avg!=null?`<div><b>${f1(res.avg)}</b><small>Promedio final</small></div>`:''}</div>`;
@@ -495,6 +519,7 @@ function editPanel(r,i,a){
     h+=`<label>Conexión manual con "${esc(rowsA[i+1].n)}"<select data-f="cvm" data-i="${i}"><option value="" ${cur===''?'selected':''}>No, solo según reglas</option><option value="0.1" ${cur==='0.1'?'selected':''}>Sí, 0.1</option><option value="0.2" ${cur==='0.2'?'selected':''}>Sí, 0.2</option></select></label>`;}
   if(ui.ap==='PARALELAS'&&llegaAManos(r))h+=`<label>Después hace (sin valor)<select data-f="pv" data-i="${i}"><option value="" ${!r.pv?'selected':''}>Según el siguiente elemento</option>${Object.entries(PV_OPC).map(([k,t])=>`<option value="${k}" ${r.pv===k?'selected':''}>${t}</option>`).join('')}</select></label>`;
   if(ui.ap==='FIJA'&&r.g===2)h+=`<label>Al agarrar continúa con<select data-f="gig" data-i="${i}"><option value="" ${!r.gig?'selected':''}>Según el siguiente elemento</option><option value="gigante" ${r.gig==='gigante'?'selected':''}>Cae a gigante</option><option value="molino" ${r.gig==='molino'?'selected':''}>Cae a molino</option></select></label>`;
+  if(ui.ap==='FIJA'&&kipAManos(r))h+=`<label>Después hace (sin valor)<select data-f="pv" data-i="${i}"><option value="" ${!r.pv?'selected':''}>Según el siguiente elemento</option>${Object.entries(FV_OPC).map(([k,t])=>`<option value="${k}" ${r.pv===k?'selected':''}>${t} y sigue a gigante</option>`).join('')}</select></label>`;
   if(ui.ap==='FIJA')h+=`<label class="opt"><input type="checkbox" data-f="ct" data-i="${i}" ${r.ct?'checked':''}> Después de este elemento hay cambio de toma (sin valor)</label>`;
   if(r.k&&CAT[r.k])h+=`<small style="color:var(--muted)">${esc(CAT[r.k].d)}${CAT[r.k].en&&CAT[r.k].en!==CAT[r.k].d?`<br><i>Código en inglés: ${esc(CAT[r.k].en)}</i>`:''}${CAT[r.k].corr?'<br>Traducción corregida con el Código en inglés.':''}</small>`;
   return h+`</div>`;
@@ -709,7 +734,7 @@ function printAll(build,pref){
         h+=`<div class="pm">Dificultad ${f1(c.dv)} · Grupos ${f1(c.eg)} · Conexión ${f1(c.cv)}${c.bon?` · Bonos ${f1(c.bon)}`:''}${c.nd?` · Ded. neutral -${f1(c.nd)}`:''}</div>`;
         h+=`<table><tr><th>Elemento</th><th>ID</th><th>Grupo</th><th>Valor</th><th>VD</th></tr>`;
         rows.forEach((r,i)=>{const vd=c.rep.has(i)?0:valOf(r,a.nivel);
-          h+=`<tr class="${res_off(c,i,vd)?'off':''}"><td>${esc(r.n)}${r.pv&&PV_OPC[r.pv]?' → '+esc(PV_OPC[r.pv]):''}${r.c&&i<rows.length-1?' <span class="cx">↔</span>':''}</td><td>${r.t==='JA'?'EV':esc(r.id||'')}</td><td>${r.t==='JA'?'X':(r.g?ROM[r.g]:'')}</td><td>${r.t==='JA'?'A':esc(r.l||'')}</td><td>${vd.toFixed(1)}</td></tr>`;});
+          h+=`<tr class="${res_off(c,i,vd)?'off':''}"><td>${esc(r.n)}${PV_TXT(r.pv)?' → '+esc(PV_TXT(r.pv)):''}${r.c&&i<rows.length-1?' <span class="cx">↔</span>':''}</td><td>${r.t==='JA'?'EV':esc(r.id||'')}</td><td>${r.t==='JA'?'X':(r.g?ROM[r.g]:'')}</td><td>${r.t==='JA'?'A':esc(r.l||'')}</td><td>${vd.toFixed(1)}</td></tr>`;});
       }
       if(!rows.length)h+=`<tr><td colspan="5">Sin elementos</td></tr>`;
       h+=`</table></article>`;}
