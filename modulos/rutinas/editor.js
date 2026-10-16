@@ -425,8 +425,9 @@ function compute(ap,rows,nivel,plantada,opt){
   if(!n7&&(ap==='PISO'||ap==='FIJA')){
     rows.forEach((r,i)=>{if(!r.c||i+1>=rows.length)return;
       if(!res.counted.has(i)||!res.counted.has(i+1)){res.notes.push(`Conexión ${i+1}-${i+2}: uno de los dos no cuenta.`);return;}
-      const v=(r.cv!=null&&r.cv!=='')?+r.cv:cvPair(items[i],items[i+1],ap,nivel);
-      if(ap==='PISO'){const m=pisoConexionInvalida(items[i],items[i+1]);if(m)res.notes.push(`Conexión ${i+1}-${i+2} ("${rows[i].n}" y "${rows[i+1].n}"): no vale, ${m}.`);}
+      let v=(r.cv!=null&&r.cv!=='')?+r.cv:cvPair(items[i],items[i+1],ap,nivel);
+      // Piso: una conexión no permitida (contrasalto, giro con giro) no vale aunque se haya puesto a mano.
+      if(ap==='PISO'){const m=pisoConexionInvalida(items[i],items[i+1]);if(m){v=0;res.notes.push(`Conexión no permitida ${i+1}-${i+2} ("${rows[i].n}" y "${rows[i+1].n}"): ${m}. No suma; quítala.`);}}
       res.cv+=v;});
     res.cv=r1(res.cv);
   }
@@ -593,9 +594,10 @@ function renderAthlete(){
     if(ui.open===i)h+=editPanel(r,i,a);
     if(i<rows.length-1){const pot=res.pot[i]||0;
       if(canLink&&(r.c||pot>0)){
-        const val=r.c?((r.cv!=null&&r.cv!=='')?+r.cv:pot):pot;
-        const lbl=r.c?(val>0?`Conectados +${val.toFixed(1)}${(r.cv!=null&&r.cv!=='')?' (manual)':''}`:'Conectados 0.0: no cumple, toca para quitar'):`Conectar +${pot.toFixed(1)}`;
-        h+=`<div class="link"><button class="${r.c?(val>0?'on':'bad'):''}" data-act="link" data-i="${i}">${lbl}</button></div>`;}
+        const mal=ui.ap==='PISO'&&r.c&&pisoConexionInvalida({r,grp:grpOf(r,'PISO',a.nivel)},{r:rows[i+1],grp:grpOf(rows[i+1],'PISO',a.nivel)});
+        const val=mal?0:r.c?((r.cv!=null&&r.cv!=='')?+r.cv:pot):pot;
+        const lbl=mal?`No permitida: ${mal}. Toca para quitar`:r.c?(val>0?`Conectados +${val.toFixed(1)}${(r.cv!=null&&r.cv!=='')?' (manual)':''}`:'Conectados 0.0: no cumple, toca para quitar'):(ui.ap==='PISO'?`Posible conexión con "${esc(rows[i+1].n)}": toca para conectar (+${pot.toFixed(1)})`:`Conectar +${pot.toFixed(1)}`);
+        h+=`<div class="link"><button class="${r.c?(val>0?'on':'bad'):(ui.ap==='PISO'?'pos':'')}" data-act="link" data-i="${i}">${lbl}</button></div>`;}
       else h+='<div class="gap"></div>';}
   });
   h+=`</div><div class="add"><input id="q" placeholder="Escribe un elemento: nombre, apodo o ID (ej. doble atrás, Cassina, 2.16)" value="${esc(ui.replace<0?ui.q:'')}" autocomplete="off"><div id="sug"></div></div>`;
@@ -610,7 +612,10 @@ function editPanel(r,i,a){
   else if(r.t==='M')h+=`<div class="two"><label>Grupo<select data-f="g" data-i="${i}">${[1,2,3,4].map(g=>`<option value="${g}" ${r.g===g?'selected':''}>${ROM[g]}</option>`).join('')}</select></label><label>Valor<select data-f="l" data-i="${i}">${Object.keys(LV).map(l=>`<option ${r.l===l?'selected':''}>${l}</option>`).join('')}</select></label></div>`;
   if(a.nivel==='N8'&&r.t!=='JA'&&(ui.ap==='ANILLOS'||ui.ap==='FIJA'))h+=`<label>Grupo para N8<select data-f="gx" data-i="${i}"><option value="">Según Código</option>${[1,2,3,4].map(g=>`<option value="${g}" ${r.gx===g?'selected':''}>${ROM[g]}</option>`).join('')}</select></label>`;
   const rowsA=a.r[ui.ap]||[];
-  if((ui.ap==='PISO'||ui.ap==='FIJA')&&a.nivel!=='N7'&&i<rowsA.length-1){const cur=(r.c&&r.cv!=null&&r.cv!=='')?String(r.cv):'';
+  // Piso: la conexión manual solo se ofrece si es viable (grupos II, III o IV, misma dirección, sin giro con giro).
+  const pisoViable=()=>{const x={r,grp:grpOf(r,'PISO',a.nivel)},y={r:rowsA[i+1],grp:grpOf(rowsA[i+1],'PISO',a.nivel)};
+    return [2,3,4].includes(x.grp)&&[2,3,4].includes(y.grp)&&!pisoConexionInvalida(x,y);};
+  if((ui.ap==='PISO'||ui.ap==='FIJA')&&a.nivel!=='N7'&&i<rowsA.length-1&&(ui.ap!=='PISO'||r.c||pisoViable())){const cur=(r.c&&r.cv!=null&&r.cv!=='')?String(r.cv):'';
     h+=`<label>Conexión manual con "${esc(rowsA[i+1].n)}"<select data-f="cvm" data-i="${i}"><option value="" ${cur===''?'selected':''}>No, solo según reglas</option><option value="0.1" ${cur==='0.1'?'selected':''}>Sí, 0.1</option><option value="0.2" ${cur==='0.2'?'selected':''}>Sí, 0.2</option></select></label>`;}
   if(ui.ap==='PARALELAS'&&llegaAManos(r))h+=`<label>Después hace (sin valor)<select data-f="pv" data-i="${i}"><option value="" ${!r.pv?'selected':''}>Según el siguiente elemento</option>${Object.entries(PV_OPC).map(([k,t])=>`<option value="${k}" ${r.pv===k?'selected':''}>${t}</option>`).join('')}</select></label>`;
   if(ui.ap==='FIJA'&&r.g===2)h+=`<label>Al agarrar continúa con<select data-f="gig" data-i="${i}"><option value="" ${!r.gig?'selected':''}>Según el siguiente elemento</option><option value="gigante" ${r.gig==='gigante'?'selected':''}>Cae a gigante</option><option value="molino" ${r.gig==='molino'?'selected':''}>Cae a molino</option></select></label>`;
