@@ -21,14 +21,14 @@
   // así basta con subir un archivo nuevo con el mismo nombre; el más reciente es el que se usa.
   // Si la búsqueda falla, se usa el ID fijo de ARCHIVOS_DRIVE.
   const CARPETA_DRIVE = "1hpU7ZeK-iv83c1hULbvt-5zRXeDpyMJi";
-  const COLECCIONES = ["normativosAKC","rutinasAKC","calendarioAKC","mvpAKC","cargasAKC","registros"];
+  const COLECCIONES = ["normativosAKC","rutinasAKC","calendarioAKC","mvpAKC","cargasAKC","registros","trainingAKC"];
   // Nombre exacto del archivo que pide la app -> ID del archivo en Drive (carpeta "Utilidades App")
   const ARCHIVOS_DRIVE = {
     "MACRO_26_27.xlsx":                        "1EykSlwYmfnoMYu2fjT9mEbFeQ6R4HqfF",
     "ASIGNACION DE COMPETENCIAS.xlsx":         "1GBEaO_sKOpd2zjIqC4CqUyG6ZXez5jkH",
     "AKC.xlsx":                                "1rNobFppHPP9gQBpy7NRGJ_yUj0Xn1pQP",
     "AKC_FuerzaFIG.xlsx":                      "1t4CpjnNAKponpJIKK_GF57LEu29BxEtj",
-    "trabajo_gav.xlsx":                        "159Jgbvo-zpYws7roVpq2K1f9B0Tz-vml",
+    "trabajo_gav.xlsx":                        "1IfdLZ0V9413b9AnC8sTlXLKCJivIERWD",
     "Excel_Solo_Valores.xlsx":                 "1lyNxLp8fdTUU9RKDgynGGiUTuOrwV7sd",
     "NORMATIVOS_AKC.xlsx":                     "1Umq4bTFYToKT2igKjXV8gdlzuU7mZ5bc",
     "Secuencias_Base_APP_AKC.xlsx":            "1AH_lM80up_Z5aAQiMZwLvKiBWZdFZLZv",
