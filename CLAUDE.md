@@ -3,6 +3,12 @@
 App web (HTML/JS sin build) del programa de Gimnasia Artística Varonil de Águilas de Kids Center (AKC).
 Se publica con GitHub Pages desde la rama `main`. Usuario: Manu (José Manuel Jaime Morales), entrenador principal. Responder en español, claro y sin relleno.
 
+## Deshabilitada (26-oct-2026)
+- Por pedido de Manu, esta app oficial ya no se usa: la App GAV vive en aguilaskc.net (`gav/app/`). `index.html` solo muestra
+  «Esta aplicación ha sido deshabilitada. Por favor, dirígete a aguilaskc.net» con un botón a https://aguilaskc.net/gav/app/,
+  y cada página de `modulos/` manda ahí desde el inicio de su `<head>` (antes de cargar Firebase). Para reabrirla, restaurar
+  `index.html` del historial y quitar esa línea de cada página.
+
 ## Repos
 - `pruebanuevappakc` = **app de prueba**. Todo cambio nuevo se hace y se prueba aquí primero.
 - `GAV-APP-AKC` = **app oficial**. No se toca hasta que Manu diga que lo de prueba ya funciona ("pásalo a la oficial").
